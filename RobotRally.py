@@ -172,7 +172,7 @@ try:
     current_goal_idx = 0
 
     just_moved_to_landmark = False
-    explore_steps_after_landmark = 10
+    explore_steps_after_landmark = 12
     explore_counter = 0
 
     #Initialize the robot
