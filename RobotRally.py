@@ -171,6 +171,10 @@ try:
 
     current_goal_idx = 0
 
+    just_moved_to_landmark = False
+    explore_steps_after_landmark = 10
+    explore_counter = 0
+
     #Initialize the robot
     if isRunningOnArlo():
         arlo = CalibratedRobot()
@@ -199,6 +203,13 @@ try:
                 if not (pathing.seen_enough_landmarks()):
                     distance, angle = pathing.explore_step(False)
                     print("exploring")
+                elif pathing.seen_enough_landmarks() and just_moved_to_landmark:
+                    if explore_counter > 0:
+                        distance, angle = pathing.explore_step(False)
+                        explore_counter -= 1
+                        print(f"Exploring after reached landmark, steps left: {explore_counter}")
+                    else:
+                        just_moved_to_landmark = False
                 else:
                     goal_id = landmark_order[current_goal_idx]  
                     goal = goals[goal_id]
@@ -208,7 +219,8 @@ try:
                     print(f"driving to_landmark{goal_id}")
                     distance, angle = pathing.move_towards_goal_step(est_pose, goal)
                     current_goal_idx +=1
-                    just_moved = True
+                    just_moved_to_landmark = True
+                    explore_counter = explore_steps_after_landmark
                     #else:
                     #    rrt = robot_RRT(
                     #        start=[est_pose.getX(), est_pose.getY()],
