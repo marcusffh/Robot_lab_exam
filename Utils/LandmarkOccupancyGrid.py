@@ -103,3 +103,26 @@ class LandmarkOccupancyGrid:
     def draw_map(self, robot_radius=None):
         plt.imshow(self.grid.T, cmap="Greys", origin='lower', vmin=0, vmax=1, extent=self.extent, interpolation='none')
 
+    def save_map(self, filename="occupancy_grid.png"):
+        """
+        Save the current occupancy grid as an image file.
+        """
+        plt.figure(figsize=(6, 6))
+        plt.imshow(
+            self.grid.T, 
+            cmap="Greys", 
+            origin='lower', 
+            vmin=0, vmax=1, 
+            extent=self.extent, 
+            interpolation='none'
+        )
+        plt.title("Occupancy Grid Map")
+        plt.xlabel("X [world units]")
+        plt.ylabel("Y [world units]")
+        plt.grid(False)
+        plt.tight_layout()
+        plt.savefig(filename, dpi=300)
+        plt.close()
+        print(f"Map saved as {filename}")
+
+
