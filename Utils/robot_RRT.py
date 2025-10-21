@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from robot_model import RobotModel
+from Utils.robot_model import RobotModel
 
 class robot_RRT:
     """

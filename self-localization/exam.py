@@ -233,7 +233,7 @@ try:
         cam = camera.Camera(1, robottype='arlo', useCaptureThread=False)
         pathing = LocalizationPathing(arlo, cam, landmarkIDs)
         landmark_utils = LandmarkUtils(cam, arlo)
-        grid_map = LandmarkOccupancyGrid(low=(-120,-120), high=(520, 420), res=0.05)
+        grid_map = LandmarkOccupancyGrid(low=(-120,-120), high=(520, 420), res=5.0)
         robot = RobotModel()
         #landmarks_driver = FindLandmarks()
     else:
@@ -308,6 +308,7 @@ try:
                     current_goal_idx +=1
                     print("Visited landmark")
                 if objectIDs[i] > 4: 
+                    print("addded obstacle to grid")
                     x_r = est_pose.getX()
                     y_r = est_pose.getY()
                     theta_r = est_pose.getTheta()
@@ -316,7 +317,7 @@ try:
                     x_obj = x_r + dists[i] * np.cos(theta_r + angles[i])
                     y_obj = y_r + dists[i] * np.sin(theta_r + angles[i])
 
-                    obstacle_for_grid = (x_obj, y_obj, landmark_radius) 
+                    obstacle_for_grid = ([x_obj, y_obj, landmark_radius]) 
 
                     # Add obstacle to grid
                     grid_map.add_landmarks(obstacle_for_grid)
@@ -343,6 +344,7 @@ try:
             # Draw map
             draw_world(est_pose, particles, world)
             cv2.imwrite(f"world{counter}.png", world)
+            #grid_map.save_map(filename=f"grid{counter}.png")
     
 
 finally: 
