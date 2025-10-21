@@ -1,5 +1,5 @@
 # test_move_forward.py
-from explore_landmarks import LocalizationPathing
+from LocalizationPathing import LocalizationPathing
 from Utils.CalibratedRobot import CalibratedRobot
 import camera
 import numpy as np
