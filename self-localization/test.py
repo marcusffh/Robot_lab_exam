@@ -10,13 +10,12 @@ import time
 
 # Initialize robot and camera
 robot = CalibratedRobot()
-cam = camera.Camera()  # or however you initialize your camera
 
 # Dummy landmarks list (won't be used in this test)
 required_landmarks = []
 
 # Initialize LocalizationPathing
-localization = LocalizationPathing(robot, cam, required_landmarks)
+localization = LocalizationPathing(robot)
 
 # Create a dummy estimated pose object
 class DummyPose:
