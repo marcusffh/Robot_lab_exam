@@ -1,5 +1,5 @@
 import numpy as np
-import random_numbers as rn
+from localization.random_numbers import rand_von_mises, randn
 
 
 class Particle(object):
@@ -76,13 +76,13 @@ def add_uncertainty(particles_list, sigma, sigma_theta):
     for particle in particles_list:
         particle.x += rn.randn(0.0, sigma)
         particle.y += rn.randn(0.0, sigma)
-        particle.theta = np.mod(particle.theta + rn.randn(0.0, sigma_theta), 2.0 * np.pi) 
+        particle.theta = np.mod(particle.theta + randn(0.0, sigma_theta), 2.0 * np.pi) 
 
 
 def add_uncertainty_von_mises(particles_list, sigma, theta_kappa):
     """Add some noise to each particle in the list. Sigma and theta_kappa is the noise
     variances for position and angle noise."""
     for particle in particles_list:
-        particle.x += rn.randn(0.0, sigma)
-        particle.y += rn.randn(0.0, sigma)
-        particle.theta = np.mod(rn.rand_von_mises(particle.theta, theta_kappa), 2.0 * np.pi) - np.pi
+        particle.x += randn(0.0, sigma)
+        particle.y += randn(0.0, sigma)
+        particle.theta = np.mod(rand_von_mises(particle.theta, theta_kappa), 2.0 * np.pi) - np.pi

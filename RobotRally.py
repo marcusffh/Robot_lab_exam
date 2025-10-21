@@ -1,26 +1,26 @@
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-import particle
-import camera
+import localization.particle as particle
+import Utils.camera as camera
 import numpy as np
 import time
 from timeit import default_timer as timer
-from RobotUtils.CalibratedRobot import CalibratedRobot
+from Utils.CalibratedRobot import CalibratedRobot
 from scipy.stats import norm
 import math
-from LocalizationPathing import LocalizationPathing
+from localization.LocalizationPathing import LocalizationPathing
 import random
 import cv2
-from LandmarkOccupancyGrid import LandmarkOccupancyGrid
-from RobotUtils.LandmarkUtils import LandmarkUtils
-from LandmarkOccupancyGrid import LandmarkOccupancyGrid
-from robot_model import RobotModel
-from robot_RRT import robot_RRT
+from Utils.LandmarkOccupancyGrid import LandmarkOccupancyGrid
+from Utils.LandmarkUtils import LandmarkUtils
+from Utils.robot_model import RobotModel
+from Utils.robot_RRT import robot_RRT
+from localization.selflocalizeGUI import SelflocalizeGUI
 
 # Flags
 showGUI = True  # Whether or not to open GUI windows
-onRobot = True # Whether or not we are running on the Arlo robot
+onRobot = False # Whether or not we are running on the Arlo robot
 
 
 def isRunningOnArlo():
@@ -30,7 +30,7 @@ def isRunningOnArlo():
     return onRobot
 
 try:
-    from RobotUtils.Robot import Robot
+    from Utils.Robot import Robot
 except ImportError:
     print("selflocalize.py: robot module not present - forcing not running on Arlo!")
     onRobot = False
@@ -39,84 +39,41 @@ except ImportError:
 CRED = (0, 0, 255)
 CGREEN = (0, 255, 0)
 CBLUE = (255, 0, 0)
-CCYAN = (255, 255, 0)
 CYELLOW = (0, 255, 255)
-CMAGENTA = (255, 0, 255)
-CWHITE = (255, 255, 255)
-CBLACK = (0, 0, 0)
 
 # Landmarks.
 # The robot knows the position of 2 landmarks. Their coordinates are in the unit centimeters [cm].
-landmarkIDs = [6, 7]
+landmarkIDs = [1, 2, 3, 4]
 landmarks = {
-    6: (0.0, 0.0),  # Coordinates for landmark 1
-    7: (300.0, 0.0)  # Coordinates for landmark 2
+    1: (0.0, 0.0),  # Coordinates for landmark 1
+    2: (0.0, 150.0), # Coordinates for landmark 2
+    3: (200.0, 0.0), # Coordinates for landmark 3
+    4: (200.0, 150.0) # Coordinates for landmark 4
 }
 
-center = np.array([(landmarks[6][0] + landmarks[7][0]) / 2,
-                   (landmarks[6][1] + landmarks[7][1]) / 2])
+offset = 15.0
+goals = {
+    1: (0.0 + offset, 0.0 + offset),
+    2: (0.0 + offset, 150.0 - offset),
+    3: (200.0 - offset, 0.0 + offset),
+    4: (200.0 - offset, 150.0 - offset)
+}
 
+landmark_order = [1,2,3,4,1]
 
+landmark_radius = 20
 
-landmark_colors = [CRED, CGREEN] # Colors used when drawing the landmarks
+landmark_colors = [CRED, CGREEN, CBLUE, CYELLOW]
 
-def jet(x):
-    """Colour map for drawing particles. This function determines the colour of 
-    a particle from its weight."""
-    r = (x >= 3.0/8.0 and x < 5.0/8.0) * (4.0 * x - 3.0/2.0) + (x >= 5.0/8.0 and x < 7.0/8.0) + (x >= 7.0/8.0) * (-4.0 * x + 9.0/2.0)
-    g = (x >= 1.0/8.0 and x < 3.0/8.0) * (4.0 * x - 1.0/2.0) + (x >= 3.0/8.0 and x < 5.0/8.0) + (x >= 5.0/8.0 and x < 7.0/8.0) * (-4.0 * x + 7.0/2.0)
-    b = (x < 1.0/8.0) * (4.0 * x + 1.0/2.0) + (x >= 1.0/8.0 and x < 3.0/8.0) + (x >= 3.0/8.0 and x < 5.0/8.0) * (-4.0 * x + 5.0/2.0)
+obstacleIds_detcted = []
 
-    return (255.0*r, 255.0*g, 255.0*b)
-
-def draw_world(est_pose, particles, world):
-    """Visualization.
-    This functions draws robots position in the world coordinate system."""
-
-    # Fix the origin of the coordinate system
-    offsetX = 100
-    offsetY = 250
-
-    # Constant needed for transforming from world coordinates to screen coordinates (flip the y-axis)
-    ymax = world.shape[0]
-
-    world[:] = CWHITE # Clear background to white
-
-    # Find largest weight
-    max_weight = 0
-    for particle in particles:
-        max_weight = max(max_weight, particle.getWeight())
-
-    # Draw particles
-    for particle in particles:
-        x = int(particle.getX() + offsetX)
-        y = ymax - (int(particle.getY() + offsetY))
-        colour = jet(particle.getWeight() / max_weight)
-        cv2.circle(world, (x,y), 2, colour, 2)
-        b = (int(particle.getX() + 15.0*np.cos(particle.getTheta()))+offsetX, 
-                                    ymax - (int(particle.getY() + 15.0*np.sin(particle.getTheta()))+offsetY))
-        cv2.line(world, (x,y), b, colour, 2)
-
-    # Draw landmarks
-    for i in range(len(landmarkIDs)):
-        ID = landmarkIDs[i]
-        lm = (int(landmarks[ID][0] + offsetX), int(ymax - (landmarks[ID][1] + offsetY)))
-        cv2.circle(world, lm, 5, landmark_colors[i], 2)
-
-    # Draw estimated robot pose
-    a = (int(est_pose.getX())+offsetX, ymax-(int(est_pose.getY())+offsetY))
-    b = (int(est_pose.getX() + 15.0*np.cos(est_pose.getTheta()))+offsetX, 
-        ymax-(int(est_pose.getY() + 15.0*np.sin(est_pose.getTheta()))+offsetY))
-    cv2.circle(world, a, 5, CMAGENTA, 2)
-    cv2.line(world, a, b, CMAGENTA, 2)
-
-
+GUI = SelflocalizeGUI(landmarkIDs, landmark_colors, landmarks)
 
 def initialize_particles(num_particles):
     particles = []
     for i in range(num_particles):
         # Random starting points. 
-        p = particle.Particle(600.0*np.random.ranf() - 100.0, 600.0*np.random.ranf() - 250.0, np.mod(2.0*np.pi*np.random.ranf(), 2.0*np.pi), 1.0/num_particles)
+        p = particle.Particle(520.0*np.random.ranf() - 120.0, 420.0*np.random.ranf() - 120.0, np.mod(2.0*np.pi*np.random.ranf(), 2.0*np.pi), 1.0/num_particles)
         particles.append(p)
 
     return particles
@@ -176,7 +133,6 @@ def resample_particles(particle_list):
             
     return resampled
 
-
 def filter_landmarks_by_distance(objectIDs, dists, angles):
     """
     Keep only the measurement at the smallest distance for each landmark ID.
@@ -195,7 +151,6 @@ def filter_landmarks_by_distance(objectIDs, dists, angles):
 
 # Main program #
 try:
-
     # Initialize particles
     num_particles = 1000
     particles = initialize_particles(num_particles)
@@ -213,57 +168,65 @@ try:
     sigma_theta_obs = 0.05
 
     counter = 0
+
+    current_goal_idx = 0
+
     #Initialize the robot
     if isRunningOnArlo():
         arlo = CalibratedRobot()
-
-
     # Allocate space for world map
     world = np.zeros((500,500,3), dtype=np.uint8)
 
     # Draw map
-    draw_world(est_pose, particles, world)
+    GUI.draw_world(est_pose, particles, world)
 
     print("Opening and initializing camera")
     if isRunningOnArlo():
         #cam = camera.Camera(0, robottype='arlo', useCaptureThread=True)
         cam = camera.Camera(1, robottype='arlo', useCaptureThread=False)
-        pathing = LocalizationPathing(arlo, cam, landmarkIDs)
+        pathing = LocalizationPathing(arlo, landmarkIDs)
         landmark_utils = LandmarkUtils(cam, arlo)
-        grid_map = LandmarkOccupancyGrid(low=(-120,-120), high=(520, 420), res=0.05)
+        grid_map = LandmarkOccupancyGrid(low=(-120,-120), high=(520, 420), res=5.0)
+        robot = RobotModel()
     else:
-        #cam = camera.Camera(0, robottype='macbookpro', useCaptureThread=True)
         cam = camera.Camera(0, robottype='macbookpro', useCaptureThread=False)
 
     while True:
-        # Move the robot according to user input (only for testing)
-        action = cv2.waitKey(10)
-        if action == ord('q'): # Quit
-            break
-    
-        if not isRunningOnArlo():
-            if action == ord('w'):
-                distance = 10.0
-            elif action == ord('x'):
-                distance = -10.0
-            elif action == ord('a'):
-                angle = 0.2
-            elif action == ord('d'):
-                angle = -0.2
-            else:
-                # stop if no key pressed
-                distance = 0
-                angle = 0
-
         # Use motor controls to update particles
         if isRunningOnArlo():
             counter +=1
-            if not pathing.seen_all_landmarks():
-                distance, angle = pathing.explore_step(False)
-            else:
-                distance, angle = pathing.move_towards_goal_step(est_pose, center)
-     
+            if counter > 1:
+                if not (pathing.seen_enough_landmarks()):
+                    distance, angle = pathing.explore_step(False)
+                    print("exploring")
+                else:
+                    goal_id = landmark_order[current_goal_idx]  
+                    goal = goals[goal_id]
                     
+                    #print(f"{[est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20)}")
+                    #if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
+                    print(f"driving to_landmark{goal_id}")
+                    distance, angle = pathing.move_towards_goal_step(est_pose, goal)
+                    current_goal_idx +=1
+                    just_moved = True
+                    #else:
+                    #    rrt = robot_RRT(
+                    #        start=[est_pose.getX(), est_pose.getY()],
+                    #        goal=[goal[0], goal[1]],
+                    #        robot_model=robot,
+                    #        map=grid_map,   
+                    #        )
+                    #    current_goal_idx += 1
+                    #    path =rrt.planning()
+                    #    smooth_path = rrt.smooth_path(path)
+                    #    moves = arlo.follow_path(smooth_path)
+                    #    for dist, ang in moves:
+                    #        sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
+            
+        if current_goal_idx >= len(landmark_order):
+            print("All goals reached!")
+            break
+                
         sample_motion_model(particles, distance, angle, sigma_d, sigma_theta)
         # Fetch next frame
         colour = cam.get_next_frame()
@@ -275,32 +238,44 @@ try:
             # List detected objects
             for i in range(len(objectIDs)):
                 print("Object ID = ", objectIDs[i], ", Distance = ", dists[i], ", angle = ", angles[i])
+                if objectIDs[i] in landmarkIDs:
+                    pathing.saw_landlanmark(objectIDs[i])
+                if objectIDs[i] > 4: 
+                    if objectIDs[i] in obstacleIds_detcted:
+                        grid_map.remove_landmark(objectIDs[i])
+                    else: 
+                        obstacleIds_detcted.append(objectIDs[i])
+                        print("addded obstacle to grid")
+                        x_r = est_pose.getX()
+                        y_r = est_pose.getY()
+                        theta_r = est_pose.getTheta()
 
+                        # Convert to world coordinates
+                        x_obj = x_r + dists[i] * np.cos(theta_r + angles[i])
+                        y_obj = y_r + dists[i] * np.sin(theta_r + angles[i])
+
+                        # Add obstacle to grid
+                        grid_map.add_landmark(objectIDs[i],x_obj, y_obj, landmark_radius)
+                    
             # Compute particle weights
             measurement_model(particles, objectIDs, dists, angles, sigma_d_obs, sigma_theta_obs)
             # Resampling
-            weights = np.array([p.getWeight() for p in particles])
-
-            weights /= np.sum(weights)
-
             particles = resample_particles(particles)
 
             # Draw detected objects
-            cam.draw_aruco_objects(colour)
-            
+            cam.draw_aruco_objects(colour)            
         else:
             # No observation - reset weights to uniform distribution
             for p in particles:
                 p.setWeight(1.0/num_particles)
-
     
         est_pose = particle.estimate_pose(particles) # The estimate of the robots current pose
 
         if showGUI:
             # Draw map
-            draw_world(est_pose, particles, world)
+            GUI.draw_world(est_pose, particles, world)
             cv2.imwrite(f"world{counter}.png", world)
-    
+            grid_map.save_map(filename=f"grid{counter}.png")
 
 finally: 
     # Make sure to clean up even if an exception occurred

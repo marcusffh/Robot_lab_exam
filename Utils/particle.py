@@ -1,14 +1,6 @@
 import numpy as np
 import random_numbers as rn
 
-"""
-Please remember that each particle represents on hypothesis of where the robot could be
-
-"""
-
-
-
-#Given
 class Particle(object):
     """Data structure for storing particle information (state and weight)"""
     def __init__(self, x=0.0, y=0.0, theta=0.0, weight=0.0):
@@ -41,8 +33,6 @@ class Particle(object):
     def setWeight(self, val):
         self.weight = val
 
-
-#Given
 def estimate_pose(particles_list):
     """Estimate the pose from particles by computing the average position and orientation over all particles. 
     This is not done using the particle weights, but just the sample distribution."""
@@ -69,8 +59,6 @@ def estimate_pose(particles_list):
         
     return Particle(x, y, theta)
      
-
-## This is the only function that we were to impliment
 def move_particle(particle, delta_x, delta_y, delta_theta):
     """Move the particle by (delta_x, delta_y, delta_theta)
     Warning: we are assuming that delta_x and delta_y are given
@@ -80,8 +68,6 @@ def move_particle(particle, delta_x, delta_y, delta_theta):
     particle.y += delta_y
     particle.theta = np.mod(particle.theta + delta_theta, 2.0 * np.pi)
 
-
-#Given
 def add_uncertainty(particles_list, sigma, sigma_theta):
     """Add some noise to each particle in the list. Sigma and sigma_theta is the noise
     variances for position and angle noise."""
@@ -91,7 +77,6 @@ def add_uncertainty(particles_list, sigma, sigma_theta):
         particle.theta = np.mod(particle.theta + rn.randn(0.0, sigma_theta), 2.0 * np.pi) 
 
 
-#Given, but we probaly wont use it...
 def add_uncertainty_von_mises(particles_list, sigma, theta_kappa):
     """Add some noise to each particle in the list. Sigma and theta_kappa is the noise
     variances for position and angle noise."""
@@ -101,15 +86,6 @@ def add_uncertainty_von_mises(particles_list, sigma, theta_kappa):
         particle.theta = np.mod(rn.rand_von_mises(particle.theta, theta_kappa), 2.0 * np.pi) - np.pi
 
 
-# Initializes a given number of particles
-def initialize_particles(num_particles):
-    particles = []
-    for i in range(num_particles):
-        # Random starting points. 
-        p = Particle(600.0*np.random.ranf() - 100.0, 600.0*np.random.ranf() - 250.0, np.mod(2.0*np.pi*np.random.ranf(), 2.0*np.pi), 1.0/num_particles)
-        particles.append(p)
-
-    return particles
 
 #impiment motion model
 #Used for the prediction step

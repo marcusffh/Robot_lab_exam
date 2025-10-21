@@ -1,15 +1,13 @@
 # explore_landmarks.py
 from Utils.CalibratedRobot import CalibratedRobot
-import camera
 import time
 import numpy as np
 
 import time
 
 class LocalizationPathing:
-    def __init__(self, robot, camera, required_landmarks, step_cm=20, rotation_deg=20, min_landmarks_to_see = 2):
+    def __init__(self, robot, required_landmarks, step_cm=20, rotation_deg=20, min_landmarks_to_see = 2):
         self.robot = robot
-        self.camera = camera
         self.required_landmarks = set(required_landmarks)
         self.step_cm = step_cm
         self.rotation_deg = rotation_deg
@@ -46,16 +44,17 @@ class LocalizationPathing:
 
             self.robot.drive_distance_cm(dist)
 
-        frame = self.camera.get_next_frame()
-        objectIDs, dists, angles = self.camera.detect_aruco_objects(frame)
-        if objectIDs is not None:
-            self.observed_landmarks.update(objectIDs)
-
-        num_seen = len(self.observed_landmarks.intersection(self.required_landmarks))
-        self.min_landmarks_met = num_seen >= self.min_landmarks_to_see
-
         return dist, angle_rad
+    
+    def saw_landlanmark(self, landmarkID):
+        """
+        Register that a landmark with a given ID has been seen.
+        """
+        if landmarkID in self.required_landmarks:
+            self.observed_landmarks.add(landmarkID)
 
+            if len(self.observed_landmarks) >= self.min_landmarks_to_see:
+                self.min_landmarks_met = True
 
     def seen_enough_landmarks(self):
         """

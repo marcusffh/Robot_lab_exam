@@ -1,6 +1,4 @@
 import numpy as np
-
-
 def randn(mu, sigma):
     """Normal random number generator
     mean mu, standard deviation sigma"""

@@ -134,14 +134,14 @@ class Camera(object):
 
         # Set camera calibration info
         if robottype == 'arlo':
-            # 1640 x 1232 @ 30 FPS is the maximum video resolution for the Arlo camera
+            #self.imageSize = (1280, 720)
             self.imageSize = (1640, 1232)
             #self.intrinsic_matrix = np.asarray([ 7.1305391967046853e+02, 0., 3.1172820723774367e+02, 0.,
             #       7.0564929862291285e+02, 2.5634470978315028e+02, 0., 0., 1. ], dtype = np.float64)
             #self.intrinsic_matrix = np.asarray([ 6.0727040957659040e+02, 0., 3.0757300398967601e+02, 0.,
             #       6.0768864690145904e+02, 2.8935674612358201e+02, 0., 0., 1. ], dtype = np.float64)
-            self.intrinsic_matrix = np.asarray([1687.0, 0., self.imageSize[0] / 2.0, 0.,
-                   1687.0, self.imageSize[1] / 2.0, 0., 0., 1.], dtype = np.float64)
+            self.intrinsic_matrix = np.asarray([1360.0, 0., self.imageSize[0] / 2.0, 0.,
+                   1360.0, self.imageSize[1] / 2.0, 0., 0., 1.], dtype = np.float64)
             self.intrinsic_matrix.shape = (3, 3)
             #self.distortion_coeffs = np.asarray([ 1.1911006165076067e-01, -1.0003366233413549e+00,
             #       1.9287903277399834e-02, -2.3728201444308114e-03, -2.8137265581326476e-01 ], dtype = np.float64)
@@ -218,7 +218,7 @@ class Camera(object):
             #self.picam2_config = self.cam.create_still_configuration()
             frame_duration_limit = int(1/self.FPS * 1000000) # Microseconds
             # TODO: Change configuration to set resolution, framerate
-            self.picam2_config = self.cam.create_video_configuration( {"size": self.imageSize, "format": 'RGB888'},
+            self.picam2_config = self.cam.create_video_configuration({"size": self.imageSize, "format": 'RGB888'},
                                                                      controls={"FrameDurationLimits": (frame_duration_limit, frame_duration_limit),
                                                                                "ScalerCrop": (0,0,3280,2464)},
                                                                      queue=False)
@@ -236,7 +236,7 @@ class Camera(object):
             if not self.cam.isOpened(): # Did not work
 
                 # We try first the generic auto-detect interface
-                self.cam = cv2.VideoCapture(camidx)
+                self.cam = cv2.VideoCapture(camidx, cv2.CAP_V4L2)
                 #print(self.cam.getBackendName())
                 if not self.cam.isOpened():  # Error
                     print("Camera.__init__: Could not open camera")

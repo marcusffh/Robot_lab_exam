@@ -13,6 +13,8 @@ class LandmarkOccupancyGrid:
 
         self.extent = [self.map_area[0][0], self.map_area[1][0], self.map_area[0][1], self.map_area[1][1]]
 
+        self.landmarks = {}
+
     def world_to_grid(self, pos):
         """
         Convert a position in world coordinates (x, y) to grid indices [i, j].
@@ -81,24 +83,37 @@ class LandmarkOccupancyGrid:
         return True
 
 
-    def add_landmarks(self, landmarks):
-        """
-        Fill the grid with landmarks.
-        Each landmark is given as (x, y, r) where
-        - (x, y) is the center in world coordinates
-        - r is the landmark's radius
-        """
+    def fill_landmarks(self, landmarks):
+        """Helper to fill grid based on a list of (x, y, r)."""
+        self.grid.fill(0)
         for i in range(self.n_grids[0]):
             for j in range(self.n_grids[1]):
                 centroid = np.array([
                     self.map_area[0][0] + self.resolution * (i + 0.5),
                     self.map_area[0][1] + self.resolution * (j + 0.5)
                 ])
-                
                 for (x, y, r) in landmarks:
                     if np.linalg.norm(centroid - np.array([x, y])) <= r:
                         self.grid[i, j] = 1
                         break  
+
+    def add_landmark(self, landmark_id, x, y, r):
+        """Add or update a single landmark and refresh grid."""
+        self.landmarks[landmark_id] = (x, y, r)
+        self.fill_landmarks(list(self.landmarks.values()))
+
+    def remove_landmark(self, landmark_id):
+        """Remove a landmark by ID and refresh grid."""
+        if landmark_id in self.landmarks:
+            del self.landmarks[landmark_id]
+            self.fill_landmarks(list(self.landmarks.values()))
+
+    def add_landmarks(self, landmarks):
+        """Add multiple landmarks at once (legacy support)."""
+        # Assign temporary IDs automatically if needed
+        for i, (x, y, r) in enumerate(landmarks, start=len(self.landmarks)):
+            self.landmarks[i] = (x, y, r)
+        self.fill_landmarks(list(self.landmarks.values()))
     
     def draw_map(self, robot_radius=None):
         plt.imshow(self.grid.T, cmap="Greys", origin='lower', vmin=0, vmax=1, extent=self.extent, interpolation='none')
@@ -107,21 +122,8 @@ class LandmarkOccupancyGrid:
         """
         Save the current occupancy grid as an image file.
         """
-        plt.figure(figsize=(6, 6))
-        plt.imshow(
-            self.grid.T, 
-            cmap="Greys", 
-            origin='lower', 
-            vmin=0, vmax=1, 
-            extent=self.extent, 
-            interpolation='none'
-        )
-        plt.title("Occupancy Grid Map")
-        plt.xlabel("X [world units]")
-        plt.ylabel("Y [world units]")
-        plt.grid(False)
-        plt.tight_layout()
-        plt.savefig(filename, dpi=300)
+        self.draw_map()
+        plt.savefig(filename)
         plt.close()
         print(f"Map saved as {filename}")
 
