@@ -1,4 +1,7 @@
 # test_move_forward.py
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from LocalizationPathing import LocalizationPathing
 from Utils.CalibratedRobot import CalibratedRobot
 import camera
