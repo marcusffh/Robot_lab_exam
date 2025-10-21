@@ -75,15 +75,15 @@ class LocalizationPathing:
             return 0, 0
         
         move_dist = distance_to_goal
-        angle_to_center = (angle_to_center + np.pi) % (2 * np.pi) - np.pi
+        angle_to_goal = (angle_to_goal + np.pi) % (2 * np.pi) - np.pi
         
         print(f"distance moved: {distance_to_goal}")
-        print(f"angle (rad) turned: {angle_to_center}")
+        print(f"angle (rad) turned: {angle_to_goal}")
 
-        self.robot.turn_angle(np.degrees(angle_to_center))
+        self.robot.turn_angle(np.degrees(angle_to_goal))
 
         self.robot.drive_distance_cm(move_dist)
 
-        return distance_to_goal, angle_to_center
+        return distance_to_goal, angle_to_goal
 
 
