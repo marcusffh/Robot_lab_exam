@@ -54,6 +54,13 @@ landmarks = {
     4: (200.0, 150.0) #Coordinates for landmark 4
 }
 
+goals = {
+    1: (10.0, 10.0),
+    2: (10.0, 140.0),
+    3: (190.0, 10.0),
+    4: (180.0, 140.0)
+}
+
 landmark_order = [1,2,3,4,1]
 
 landmark_radius = 20
@@ -72,7 +79,7 @@ def jet(x):
 
 def draw_world(est_pose, particles, world):
     """Visualization.
-    This functions draws robots position in the world coordinate system."""
+    This function draws robot position and all landmarks in the world coordinate system."""
 
     # Fix the origin of the coordinate system
     offsetX = 100
@@ -81,33 +88,38 @@ def draw_world(est_pose, particles, world):
     # Constant needed for transforming from world coordinates to screen coordinates (flip the y-axis)
     ymax = world.shape[0]
 
-    world[:] = CWHITE # Clear background to white
+    world[:] = CWHITE  # Clear background to white
 
     # Find largest weight
-    max_weight = 0
-    for particle in particles:
-        max_weight = max(max_weight, particle.getWeight())
+    max_weight = max([p.getWeight() for p in particles]) if particles else 1.0
 
     # Draw particles
     for particle in particles:
         x = int(particle.getX() + offsetX)
-        y = ymax - (int(particle.getY() + offsetY))
+        y = ymax - int(particle.getY() + offsetY)
         colour = jet(particle.getWeight() / max_weight)
-        cv2.circle(world, (x,y), 2, colour, 2)
-        b = (int(particle.getX() + 15.0*np.cos(particle.getTheta()))+offsetX, 
-                                    ymax - (int(particle.getY() + 15.0*np.sin(particle.getTheta()))+offsetY))
-        cv2.line(world, (x,y), b, colour, 2)
+        cv2.circle(world, (x, y), 2, colour, 2)
+        b = (
+            int(particle.getX() + 15.0 * np.cos(particle.getTheta())) + offsetX,
+            ymax - int(particle.getY() + 15.0 * np.sin(particle.getTheta()) + offsetY),
+        )
+        cv2.line(world, (x, y), b, colour, 2)
 
-    # Draw landmarks
-    for i in range(len(landmarkIDs)):
-        ID = landmarkIDs[i]
-        lm = (int(landmarks[ID][0] + offsetX), int(ymax - (landmarks[ID][1] + offsetY)))
-        cv2.circle(world, lm, 5, landmark_colors[i], 2)
+    # Draw landmarks with labels and coordinates
+    for i, ID in enumerate(landmarkIDs):
+        lm_x, lm_y = landmarks[ID]
+        lm_screen = (int(lm_x + offsetX), int(ymax - (lm_y + offsetY)))
+        cv2.circle(world, lm_screen, 5, landmark_colors[i], -1)
+        label = f"ID {ID} ({lm_x:.0f}, {lm_y:.0f})"
+        cv2.putText(world, label, (lm_screen[0] + 10, lm_screen[1] - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, CBLACK, 1, cv2.LINE_AA)
 
     # Draw estimated robot pose
-    a = (int(est_pose.getX())+offsetX, ymax-(int(est_pose.getY())+offsetY))
-    b = (int(est_pose.getX() + 15.0*np.cos(est_pose.getTheta()))+offsetX, 
-        ymax-(int(est_pose.getY() + 15.0*np.sin(est_pose.getTheta()))+offsetY))
+    a = (int(est_pose.getX()) + offsetX, ymax - (int(est_pose.getY()) + offsetY))
+    b = (
+        int(est_pose.getX() + 15.0 * np.cos(est_pose.getTheta())) + offsetX,
+        ymax - (int(est_pose.getY() + 15.0 * np.sin(est_pose.getTheta())) + offsetY),
+    )
     cv2.circle(world, a, 5, CMAGENTA, 2)
     cv2.line(world, a, b, CMAGENTA, 2)
 
@@ -269,7 +281,7 @@ try:
                     print("exploring")
                 else:
                     goal_id = landmark_order[current_goal_idx]
-                    goal = landmarks[goal_id]
+                    goal = goals[goal_id]
                     #print(f"{[est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20)}")
                     #if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
                     print("driving to next landmark")

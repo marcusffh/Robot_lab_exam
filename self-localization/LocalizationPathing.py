@@ -69,10 +69,6 @@ class LocalizationPathing:
         direction = goal - robot_pos
         distance_to_goal = np.linalg.norm(direction)
         angle_to_goal = np.arctan2(direction[1], direction[0]) - est_pose.getTheta()
-
-        if distance_to_goal < 30:
-            print("reached center")
-            return 0, 0
         
         move_dist = distance_to_goal
         angle_to_goal = (angle_to_goal + np.pi) % (2 * np.pi) - np.pi
