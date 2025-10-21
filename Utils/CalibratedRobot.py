@@ -1,8 +1,8 @@
 import time
 import numpy as np
 import math
-import RobotUtils.Robot as robot
-from RobotUtils.vector_utils import VectorUtils
+import Utils.Robot as robot
+from Utils.vector_utils import VectorUtils
 
 class CalibratedRobot:
     def __init__(self):
