@@ -274,6 +274,7 @@ try:
                     #if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
                     print("driving to next landmark")
                     pathing.move_towards_goal_step(est_pose, goal)
+                    current_goal_idx +=1
                     #else:
                     #    rrt = robot_RRT(
                     #        start=[est_pose.getX(), est_pose.getY()],
@@ -304,9 +305,6 @@ try:
             # List detected objects
             for i in range(len(objectIDs)):
                 print("Object ID = ", objectIDs[i], ", Distance = ", dists[i], ", angle = ", angles[i])
-                if objectIDs[i] == current_goal_idx and dists[i] < 40:                   
-                    current_goal_idx +=1
-                    print("Visited landmark")
                 if objectIDs[i] > 4: 
                     print("addded obstacle to grid")
                     x_r = est_pose.getX()
