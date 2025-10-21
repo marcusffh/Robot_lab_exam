@@ -110,9 +110,6 @@ def draw_world(est_pose, particles, world):
         lm_x, lm_y = landmarks[ID]
         lm_screen = (int(lm_x + offsetX), int(ymax - (lm_y + offsetY)))
         cv2.circle(world, lm_screen, 5, landmark_colors[i], -1)
-        label = f"ID {ID} ({lm_x:.0f}, {lm_y:.0f})"
-        cv2.putText(world, label, (lm_screen[0] + 10, lm_screen[1] - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, CBLACK, 1, cv2.LINE_AA)
 
     # Draw estimated robot pose
     a = (int(est_pose.getX()) + offsetX, ymax - (int(est_pose.getY()) + offsetY))
@@ -280,7 +277,7 @@ try:
                     distance, angle = pathing.explore_step(False)
                     print("exploring")
                 else:
-                    goal_id = landmark_order[current_goal_idx]
+                    goal_id = landmark_order[current_goal_idx]  
                     goal = goals[goal_id]
                     #print(f"{[est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20)}")
                     #if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
