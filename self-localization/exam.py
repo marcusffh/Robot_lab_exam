@@ -281,8 +281,8 @@ try:
                     goal = goals[goal_id]
                     #print(f"{[est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20)}")
                     #if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
-                    print("driving to next landmark")
-                    pathing.move_towards_goal_step(est_pose, goal)
+                    print(f"driving to_landmark{goal_id}")
+                    distance, angle = pathing.move_towards_goal_step(est_pose, goal)
                     current_goal_idx +=1
                     #else:
                     #    rrt = robot_RRT(

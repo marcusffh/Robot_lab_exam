@@ -81,6 +81,7 @@ class LocalizationPathing:
 
         self.robot.drive_distance_cm(move_dist)
         self.robot.stop()
+        time.sleep(0.2)
 
         return distance_to_goal, angle_to_goal
 
