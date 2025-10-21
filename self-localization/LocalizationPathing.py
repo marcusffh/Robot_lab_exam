@@ -62,6 +62,7 @@ class LocalizationPathing:
         Returns True if at least `min_landmarks_seen` have been observed.
         """
         return self.min_landmarks_met
+    
 
     
     def move_towards_goal_step(self, est_pose, goal):
@@ -79,6 +80,7 @@ class LocalizationPathing:
         self.robot.turn_angle(np.degrees(angle_to_goal))
 
         self.robot.drive_distance_cm(move_dist)
+        self.robot.stop()
 
         return distance_to_goal, angle_to_goal
 
