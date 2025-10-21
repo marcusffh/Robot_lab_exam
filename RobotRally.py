@@ -196,6 +196,9 @@ try:
         cam = camera.Camera(0, robottype='macbookpro', useCaptureThread=False)
 
     while True:
+        if current_goal_idx > len(landmark_order):
+            print("All goals reached!")
+            break
         # Use motor controls to update particles
         if isRunningOnArlo():
             counter +=1
@@ -234,10 +237,6 @@ try:
                     #    moves = arlo.follow_path(smooth_path)
                     #    for dist, ang in moves:
                     #        sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
-            
-        if current_goal_idx >= len(landmark_order):
-            print("All goals reached!")
-            break
                 
         sample_motion_model(particles, distance, angle, sigma_d, sigma_theta)
         # Fetch next frame
