@@ -34,7 +34,7 @@ class DummyPose:
 est_pose = DummyPose(0, 0, 0)
 
 # Goal is 100 cm ahead along x-axis
-goal = np.array([100, 0])
+goal = np.array([200, 0])
 
 # Move towards the goal
 distance, angle = localization.move_towards_goal_step(est_pose, goal)
