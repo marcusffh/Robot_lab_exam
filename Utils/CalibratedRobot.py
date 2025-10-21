@@ -1,5 +1,8 @@
 import time
-import Robotutils.robot as robot
+import numpy as np
+import math
+import RobotUtils.Robot as robot
+from RobotUtils.vector_utils import VectorUtils
 
 class CalibratedRobot:
     def __init__(self):
@@ -9,7 +12,7 @@ class CalibratedRobot:
         self.TURN_TIME = 0.89 # time to turn 90 degrees at default speed (64)
         
         #ratio for adjusting the wheels to have the same power
-        self.CAL_KL = 0.97
+        self.CAL_KL = 0.99
         self.CAL_KR = 1.0
         
         self.MIN_PWR = 40
@@ -29,7 +32,6 @@ class CalibratedRobot:
         r = self.clamp_power(rightSpeed * self.CAL_KR) if rightSpeed > 0 else 0
         self.arlo.go_diff(l, r, leftDir, rightDir)
 
-    # This is the main drive forward function for the robot
     def drive_distance(self, meters, direction=None, speed=None,):
         """Drive a certain amount of meters at a given speed."""
         if speed is None:
@@ -42,7 +44,11 @@ class CalibratedRobot:
         time.sleep(duration)
         self.arlo.stop()
 
-    #This is the main turn function for the robot
+    def drive_distance_cm(self, distance_cm, direction=None, speed=None):
+        """Wrapper: convert cm to meters for the robot API"""
+        distance_m = distance_cm / 100.0
+        self.drive_distance(distance_m, direction, speed)
+
     def turn_angle(self, angleDeg, speed=None):
         """Turn a given angle in degrees at a given speed. Positive = left, negative = right."""
         if speed is None:
@@ -58,12 +64,45 @@ class CalibratedRobot:
             time.sleep(duration)
             self.arlo.stop()
             
-    def forward_proximity_check(self, center_dist = 0, left_dist = 0, right_dist = 0):
+    def proximity_check(self):
         left = self.arlo.read_left_ping_sensor()
         center = self.arlo.read_front_ping_sensor()
         right = self.arlo.read_right_ping_sensor()
-        if center < center_dist or left < left_dist or right < right_dist:
-            self.arlo.stop()
-               
+        
+        return  left, center, right
+    
+    def follow_path(self, path, start_orientation=np.array([0, 1])):
+        moves = []
+        orientation_unit = start_orientation / np.linalg.norm(start_orientation)
+
+        for i in range(len(path) - 1):
+            current_p = np.array(path[i])
+            next_p = np.array(path[i + 1])
+
+            next_vec = next_p - current_p
+            next_unit = next_vec / np.linalg.norm(next_vec)
+
+            dot = np.clip(np.dot(orientation_unit, next_unit), -1.0, 1.0)
+            angle = np.arccos(dot)
+
+            cross = orientation_unit[0]*next_unit[1] - orientation_unit[1]*next_unit[0]
+            if cross < 0:
+                angle = -angle 
+
+            orientation_unit = VectorUtils.rotate_vector(orientation_unit, angle)
+            orientation_unit /= np.linalg.norm(orientation_unit)
+
+            distance = np.linalg.norm(next_vec)
+
+            print(f"angle: {math.degrees(angle):.2f} degrees")
+            print(f"distance: {distance:.2f}")
+
+            self.turn_angle(math.degrees(angle))
+            self.drive_distance(distance)
+
+            moves.append((distance, angle))
+            
+        return moves
+            
     def stop(self):
         self.arlo.stop()
