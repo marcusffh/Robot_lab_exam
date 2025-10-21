@@ -13,7 +13,7 @@ import time
 robot = CalibratedRobot()
 
 # Rotate 45 degrees
-angle_deg = 1080
+angle_deg = -1080
 robot.turn_angle(angle_deg)
 
 print(f"Robot rotated {angle_deg} degrees")
