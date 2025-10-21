@@ -55,10 +55,10 @@ landmarks = {
 }
 
 goals = {
-    1: (10.0, 10.0),
-    2: (10.0, 140.0),
-    3: (190.0, 10.0),
-    4: (180.0, 140.0)
+    1: (15.0, 15.0),
+    2: (15.0, 135.0),
+    3: (185.0, 15.0),
+    4: (185.0, 135.0)
 }
 
 landmark_order = [1,2,3,4,1]
@@ -205,7 +205,6 @@ def filter_landmarks_by_distance(objectIDs, dists, angles):
 
 # Main program #
 try:
-
     # Initialize particles
     num_particles = 1000
     particles = initialize_particles(num_particles)
@@ -225,6 +224,7 @@ try:
     counter = 0
 
     current_goal_idx = 0
+    just_moved = False
     #Initialize the robot
     if isRunningOnArlo():
         arlo = CalibratedRobot()
@@ -273,7 +273,7 @@ try:
         if isRunningOnArlo():
             counter +=1
             if counter > 1:
-                if not pathing.seen_enough_landmarks():
+                if not (pathing.seen_enough_landmarks()):
                     distance, angle = pathing.explore_step(False)
                     print("exploring")
                 else:
@@ -284,6 +284,7 @@ try:
                     print(f"driving to_landmark{goal_id}")
                     distance, angle = pathing.move_towards_goal_step(est_pose, goal)
                     current_goal_idx +=1
+                    just_moved = True
                     #else:
                     #    rrt = robot_RRT(
                     #        start=[est_pose.getX(), est_pose.getY()],
