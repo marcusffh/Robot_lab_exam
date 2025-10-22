@@ -123,12 +123,7 @@ def measurement_model(particle_list, ObjectIDs, dists, angles, sigma_d, sigma_th
 def resample_particles(particle_list):
     weights = np.array([p.getWeight() for p in particle_list])
     total_weight = np.sum(weights)
-
-    # Avoid divide-by-zero
-    if total_weight == 0 or np.isnan(total_weight):
-        weights = np.ones(len(particle_list)) / len(particle_list)
-    else:
-        weights /= total_weight
+    weights /= total_weight
 
     cdf = np.cumsum(weights)
     resampled = []
@@ -144,7 +139,7 @@ def resample_particles(particle_list):
         )
         resampled.append(p_resampled)
 
-    rejuvenation_ratio = 0.05  # 5% random new particles
+    rejuvenation_ratio = 0.025  # 5% random new particles
     n_random = int(len(particle_list) * rejuvenation_ratio)
 
     for i in range(n_random):
