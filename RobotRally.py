@@ -288,7 +288,6 @@ try:
                 if objectIDs[i] > 4: 
                     if objectIDs[i] in obstacleIds_detcted:
                         grid_map.remove_landmark(objectIDs[i])
-                    else: 
                         obstacleIds_detcted.append(objectIDs[i])
                         print("addded obstacle to grid")
                         x_r = est_pose.getX()
@@ -322,7 +321,6 @@ try:
             GUI.draw_world(est_pose, particles, world)
             cv2.imwrite(f"world{counter}.png", world)
             
-
 finally: 
     # Make sure to clean up even if an exception occurred
     
