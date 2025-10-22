@@ -227,9 +227,8 @@ try:
             if counter > 1:
                 if pre_exploring:
                     distance, angle = pathing.explore_step(False)
-                    pre_explore_steps -= 1
-                    Landmarks_seen_this_step.clear()  
-                    if pre_explore_steps <= 0:
+                    explore_steps -= 1
+                    if explore_steps <= 0:
                         pre_exploring = False
                 else:        
                     goal_id = landmark_order[current_goal_idx]  
