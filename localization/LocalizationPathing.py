@@ -39,9 +39,9 @@ class LocalizationPathing:
                 self.robot.turn_angle(-45)
                 angle_rad = np.radians(-45)
 
-            dist, obstacle_detected = self.robot.drive_distance_cm(dist)
+            dist, object_detected = self.robot.drive_distance_cm(dist)
 
-        return dist, angle_rad, obstacle_detected
+        return dist, angle_rad, object_detected
     
     def saw_landmark(self, landmarkID):
         """
@@ -74,37 +74,26 @@ class LocalizationPathing:
 
         self.robot.turn_angle(np.degrees(angle_to_goal))
 
-        distance, obstacleDetected = self.robot.drive_distance_cm(move_dist)
+        distance, object_detected = self.robot.drive_distance_cm(move_dist)
         self.robot.stop()
         time.sleep(0.2)
 
-        return distance, angle_to_goal, obstacleDetected
+        return distance, angle_to_goal, object_detected
 
 
-def avoid_obstacle(self,  dist = 10, turn_angle=45, stop_threshold=25):
-    """
-    Reads proximity sensors and performs a short avoidance maneuver toward
-    the side with more free space.
-    """
+def steer_away_from_object(self, turn_angle=45, stop_threshold=25):
     left, center, right = self.proximity_check()
-    angle = 0
-    distance = 0
-    # Determine which side is more open
-    if left > right:
-        self.turn_angle(turn_angle)
-        angle = turn_angle
+    angle_turned = 0
+    distance_moved = 0
 
-    else:
-        self.turn_angle(-turn_angle)
-        angle = -turn_angle
+    # If any sensor is below threshold, decide which way to turn
+    if left < stop_threshold or center < stop_threshold or right < stop_threshold:
+        if left > right:
+            self.turn_angle(turn_angle)  # turn left
+            angle_turned = np.radians(turn_angle)
+        else:
+            self.turn_angle(-turn_angle)  # turn right
+            angle_turned = np.radians(-turn_angle)
 
-    # Optionally, check again after turning
-    left, center, right = self.proximity_check()
+    return distance_moved, angle_turned
 
-    # If still too close, back up a bit
-    if min(left, center, right) < stop_threshold:
-        print("Still too close, backing up")
-        self.drive_distance_cm(dist, direction=self.BACKWARD)
-        distance = dist
-
-    return distance, np.radians(angle)

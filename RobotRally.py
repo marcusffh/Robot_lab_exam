@@ -190,15 +190,13 @@ try:
 
     current_goal_idx = 0
 
-    just_moved_to_landmark = False
-    explore_steps_after_landmark = 18
-    explore_counter = explore_steps_after_landmark
-    Landmarks_seen_this_step = []
-
-    pre_exploring = True
+    explore_steps = 16
     pre_explore_steps = 12
+    explore_counter = explore_steps
+    landmarks_seen_last_timestep = []
+    object_detected = False
 
-    obstacle_detected = False
+    state = "pre_explore"
 
     #Initialize the robot
     if isRunningOnArlo():
@@ -224,77 +222,93 @@ try:
         if current_goal_idx >= len(landmark_order):
             print("All goals reached!")
             break
-
+        counter += 1
         # Use motor controls to update particles
         if isRunningOnArlo():
-            counter +=1
-            if counter > 1:
-                if obstacle_detected:
-                    pathing.avoid_obstacle()
-                    obstacle_detected = False
-                elif pre_exploring:
-                    distance, angle, obstacle_detected = pathing.explore_step(False)
-                    pre_explore_steps -= 1
-                    if pre_explore_steps <= 0:
-                        pre_exploring = False
-                else:        
-                    goal_id = landmark_order[current_goal_idx]  
-                    goal = goals[goal_id]
-                    if just_moved_to_landmark:
-                        if explore_counter > 0:
-                            if goal_id in Landmarks_seen_this_step:
-                                distance, angle, obstacle_detected = pathing.move_towards_goal_step(est_pose, goal)
-                                explore_counter = explore_steps_after_landmark
-                            else:
-                                distance, angle, obstacle_detected = pathing.explore_step(False)
-                                explore_counter -= 1
-                                print(f"Exploring after reached landmark, steps left: {explore_counter}")
-                        else:
-                            just_moved_to_landmark = False
-                            distance, angle, obstacle_detected = 0,0, False
-                            current_goal_idx +=1
+            if state == "pre_explore":
+                print("Pre exploring")
+                if pre_explore_steps <= 11:
+                    distance, angle, object_detected = pathing.explore_step(False)
+                pre_explore_steps -=1
+                if pre_explore_steps <= 0:
+                    state = "navigate"
+
+            elif state == "steer_away_from_object":
+                print("steer_away_from_object")
+                distance, angle = pathing.steer_away_from_object()
+                object_detected = False
+                explore_counter = explore_steps
+                state = "explore"
+
+            elif state == "explore":
+                if explore_counter > 0:
+                    goal_id = landmark_order[current_goal_idx]
+                    prev_goal_id = landmark_order[current_goal_idx - 1]
+                    if prev_goal_id in landmarks_seen_last_timestep:
+                        current_goal_idx -= 1
+                        state = "navigate"
                     else:
-                    #print(f"{[est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20)}")
-                        if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
-                            print(f"driving to_landmark {goal_id}")
-                            distance, angle, obstacle_detected = pathing.move_towards_goal_step(est_pose, goal)
-                            just_moved_to_landmark = True
-                            explore_counter = explore_steps_after_landmark
+                        distance, angle, object_detected = pathing.explore_step(False)
+                        explore_counter -= 1
+                        print(f"Exploring after landmark, steps left: {explore_counter}")
+
+                    if object_detected:
+                        state = "steer_away_from_object"
+                    elif explore_counter <= 0:
+                        state = "navigate"
+
+            elif state == "navigate":
+                goal_id = landmark_order[current_goal_idx]
+                goal = goals[goal_id]
+                print(f"Navigating to goal {goal_id}")
+
+                # Check if direct path is clear
+                if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
+                    distance, angle, object_detected = pathing.move_towards_goal_step(est_pose, goal)
+                    if object_detected:
+                        state = "steer_away_from_object"
+                    else:
+                        current_goal_idx +=1
+                        explore_counter = explore_steps
+                        state = "explore"
+                else:
+                    distance, angle = 0, 0
+                    print("Path blocked by obstacle, using RRT")
+                    rrt = robot_RRT(
+                        start=[est_pose.getX(), est_pose.getY()],
+                        goal=[goal[0], goal[1]],
+                        robot_model=robot,
+                        map=grid_map,
+                    )
+                    path = rrt.planning()
+                    if path is not None:
+                        smooth_path = rrt.smooth_path(path)
+                        rrt.draw_graph(smooth_path)
+                        moves, object_detected = arlo.follow_path(smooth_path)
+
+                        for dist, ang in moves:
+                            sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
+
+                        if object_detected:
+                            state = "steer_away_from_object"
                         else:
-                            print("RRT")
-                            rrt = robot_RRT(
-                                start=[est_pose.getX(), est_pose.getY()],
-                                goal=[goal[0], goal[1]],
-                                robot_model=robot,
-                                map=grid_map,   
-                                )
-                            print(f"{est_pose.getX(), est_pose.getY(), goal[0], goal[1]}")
-                            path =rrt.planning()
-                            if path is not None:
-                                smooth_path = rrt.smooth_path(path)
-                                rrt.draw_graph(smooth_path)
-                                moves, obstacle_detected = arlo.follow_path(smooth_path)
-                                if obstacle_detected:
-                                    just_moved_to_landmark = True
-                                    explore_steps_after_landmark = explore_counter
-                                for dist, ang in moves:
-                                    sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
-                            else:
-                                print("Path is none")
-                                break
+                            explore_counter = explore_steps
+                            state = "explore"
+                    else:
+                        print("RRT failed to find path.")
+                        state = "explore"
                     
         sample_motion_model(particles, distance, angle, sigma_d, sigma_theta)
-        particles = inject_random_particles(particles, ratio=0.05)
         # Fetch next frame
         colour = cam.get_next_frame()
-        Landmarks_seen_this_step.clear()
+        landmarks_seen_last_timestep.clear()
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
             objectIDs, dists, angles = filter_landmarks_by_distance(objectIDs, dists, angles)
             # List detected objects
             for i in range(len(objectIDs)):
-                Landmarks_seen_this_step.append(objectIDs[i])
+                landmarks_seen_last_timestep.append(objectIDs[i])
                 print("Object ID = ", objectIDs[i], ", Distance = ", dists[i], ", angle = ", angles[i])
                 if objectIDs[i] in landmarkIDs:
                     pathing.saw_landmark(objectIDs[i])
@@ -329,6 +343,7 @@ try:
                 p.setWeight(1.0/num_particles)
     
         est_pose = particle.estimate_pose(particles) # The estimate of the robots current pose
+        particles = inject_random_particles(particles, ratio=0.01)
 
         if showGUI:
             # Draw map
