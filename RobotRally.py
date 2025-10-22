@@ -190,10 +190,12 @@ try:
 
     current_goal_idx = 0
 
-    just_moved_to_landmark = True
+    just_moved_to_landmark = False
     explore_steps_after_landmark = 12
     explore_counter = explore_steps_after_landmark
     Landmarks_seen_this_step = []
+
+    pre_exploring = True
 
     #Initialize the robot
     if isRunningOnArlo():
@@ -222,30 +224,37 @@ try:
         # Use motor controls to update particles
         if isRunningOnArlo():
             counter +=1
-            goal_id = landmark_order[current_goal_idx]  
-            goal = goals[goal_id]
             if counter > 1:
-                if just_moved_to_landmark:
-                    if explore_counter > 0:
-                        if goal_id in Landmarks_seen_this_step:
-                             distance, angle = pathing.move_towards_goal_step(est_pose, goal)
-                             explore_counter = explore_steps_after_landmark
+                if pre_exploring:
+                    distance, angle = pathing.explore_step(False)
+                    pre_explore_steps -= 1
+                    Landmarks_seen_this_step.clear()  
+                    if pre_explore_steps <= 0:
+                        pre_exploring = False
+                else:        
+                    goal_id = landmark_order[current_goal_idx]  
+                    goal = goals[goal_id]
+                    if just_moved_to_landmark:
+                        if explore_counter > 0:
+                            if goal_id in Landmarks_seen_this_step:
+                                distance, angle = pathing.move_towards_goal_step(est_pose, goal)
+                                explore_counter = explore_steps_after_landmark
+                            else:
+                                distance, angle = pathing.explore_step(False)
+                                explore_counter -= 1
+                                print(f"Exploring after reached landmark, steps left: {explore_counter}")
                         else:
-                            distance, angle = pathing.explore_step(False)
-                            explore_counter -= 1
-                            print(f"Exploring after reached landmark, steps left: {explore_counter}")
+                            just_moved_to_landmark = False
+                            distance, angle = 0,0
+                            current_goal_idx +=1
                     else:
-                        just_moved_to_landmark = False
-                        distance, angle = 0,0
-                        current_goal_idx +=1
-                else:
                     #print(f"{[est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20)}")
                     #if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
-                    print(f"driving to_landmark {goal_id}")
-                    distance, angle = pathing.move_towards_goal_step(est_pose, goal)
-                    just_moved_to_landmark = True
-                    explore_counter = explore_steps_after_landmark
-                    #else:
+                        print(f"driving to_landmark {goal_id}")
+                        distance, angle = pathing.move_towards_goal_step(est_pose, goal)
+                        just_moved_to_landmark = True
+                        explore_counter = explore_steps_after_landmark
+                        #else:
                     #    rrt = robot_RRT(
                     #        start=[est_pose.getX(), est_pose.getY()],
                     #        goal=[goal[0], goal[1]],
