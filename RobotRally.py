@@ -191,7 +191,7 @@ try:
     current_goal_idx = 0
 
     just_moved_to_landmark = False
-    explore_steps_after_landmark = 12
+    explore_steps_after_landmark = 18
     explore_counter = explore_steps_after_landmark
     Landmarks_seen_this_step = []
 
