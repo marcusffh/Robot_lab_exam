@@ -46,17 +46,17 @@ CYELLOW = (0, 255, 255)
 landmarkIDs = [1, 2, 3, 4]
 landmarks = {
     1: (0.0, 0.0),  # Coordinates for landmark 1
-    2: (0.0, 150.0), # Coordinates for landmark 2
+    2: (0.0, 200.0), # Coordinates for landmark 2
     3: (200.0, 0.0), # Coordinates for landmark 3
-    4: (200.0, 150.0) # Coordinates for landmark 4
+    4: (200.0, 200.0) # Coordinates for landmark 4
 }
 
 offset = 10.0
 goals = {
     1: (0.0 + offset, 0.0 + offset),
-    2: (0.0 + offset, 150.0 - offset),
+    2: (0.0 + offset, 200.0 - offset),
     3: (200.0 - offset, 0.0 + offset),
-    4: (200.0 - offset, 150.0 - offset)
+    4: (200.0 - offset, 200.0 - offset)
 }
 
 landmark_order = [1,2,3,4,1]
@@ -119,6 +119,17 @@ def measurement_model(particle_list, ObjectIDs, dists, angles, sigma_d, sigma_th
 
         particle.setWeight(p_observation_given_x)
 
+def inject_random_particles(particle_list, ratio=0.05):
+    n_random = int(len(particle_list) * ratio)
+    for i in range(n_random):
+        particle_list[i] = particle.Particle(
+            520.0 * np.random.ranf() - 120.0,
+            420.0 * np.random.ranf() - 120.0,
+            np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
+            1.0 / len(particle_list)
+        )
+    return particle_list
+
 
 def resample_particles(particle_list):
     weights = np.array([p.getWeight() for p in particle_list])
@@ -138,17 +149,6 @@ def resample_particles(particle_list):
             1.0 / len(particle_list)
         )
         resampled.append(p_resampled)
-
-    rejuvenation_ratio = 0.05 
-    n_random = int(len(particle_list) * rejuvenation_ratio)
-
-    for i in range(n_random):
-        resampled[i] = particle.Particle(
-            520.0 * np.random.ranf() - 120.0,
-            420.0 * np.random.ranf() - 120.0,
-            np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
-            1.0 / len(particle_list)
-        )
 
     return resampled
 
@@ -257,6 +257,7 @@ try:
                     #        sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
                 
         sample_motion_model(particles, distance, angle, sigma_d, sigma_theta)
+        particles = inject_random_particles(particles, ratio=0.05)
         # Fetch next frame
         colour = cam.get_next_frame()
         
