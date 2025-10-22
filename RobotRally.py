@@ -196,6 +196,7 @@ try:
     Landmarks_seen_this_step = []
 
     pre_exploring = True
+    pre_explore_steps = 12
 
     #Initialize the robot
     if isRunningOnArlo():
@@ -227,8 +228,8 @@ try:
             if counter > 1:
                 if pre_exploring:
                     distance, angle = pathing.explore_step(False)
-                    explore_steps -= 1
-                    if explore_steps <= 0:
+                    pre_explore_steps -= 1
+                    if pre_explore_steps <= 0:
                         pre_exploring = False
                 else:        
                     goal_id = landmark_order[current_goal_idx]  
