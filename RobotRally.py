@@ -51,7 +51,7 @@ landmarks = {
     4: (200.0, 200.0) # Coordinates for landmark 4
 }
 
-offset = 0.0
+offset = 0.0 
 goals = {
     1: (0.0 + offset, 0.0 + offset),
     2: (0.0 + offset, 200.0 - offset),
@@ -84,6 +84,8 @@ def sample_motion_model(particles_list, distance, angle, sigma_d, sigma_theta):
     
         particle.move_particle(p, delta_x, delta_y, angle)
     if not(distance == 0 and angle == 0):
+        particle.add_uncertainty(particles_list, sigma_d, sigma_theta)
+        sigma_d = sigma_d if distance != 0 else sigma_d * 0.1
         particle.add_uncertainty(particles_list, sigma_d, sigma_theta)
 
 
@@ -118,7 +120,7 @@ def measurement_model(particle_list, ObjectIDs, dists, angles, sigma_d, sigma_th
 
         particle.setWeight(p_observation_given_x)
 
-def inject_random_particles(particle_list, ratio=0.05):
+def inject_random_particles(particle_list, ratio=0.01):
     n_random = int(len(particle_list) * ratio)
     for i in range(n_random):
         particle_list[i] = particle.Particle(
