@@ -198,7 +198,7 @@ try:
 
     just_moved_to_landmark = True
     explore_steps_after_landmark = 12
-    explore_counter = 0
+    explore_counter = explore_steps_after_landmark
 
     #Initialize the robot
     if isRunningOnArlo():
