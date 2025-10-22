@@ -81,20 +81,22 @@ class LocalizationPathing:
         return distance, angle_to_goal, obstacleDetected
 
 
-def avoid_obstacle(self, turn_angle=45, stop_threshold=25):
+def avoid_obstacle(self,  dist = 10, turn_angle=45, stop_threshold=25):
     """
     Reads proximity sensors and performs a short avoidance maneuver toward
     the side with more free space.
     """
     left, center, right = self.proximity_check()
-
+    angle = 0
+    distance = 0
     # Determine which side is more open
     if left > right:
-        print("Avoiding obstacle: turning left")
         self.turn_angle(turn_angle)
+        angle = turn_angle
+
     else:
-        print("Avoiding obstacle: turning right")
         self.turn_angle(-turn_angle)
+        angle = -turn_angle
 
     # Optionally, check again after turning
     left, center, right = self.proximity_check()
@@ -102,6 +104,7 @@ def avoid_obstacle(self, turn_angle=45, stop_threshold=25):
     # If still too close, back up a bit
     if min(left, center, right) < stop_threshold:
         print("Still too close, backing up")
-        self.drive_distance_cm(10, direction=self.BACKWARD)
+        self.drive_distance_cm(dist, direction=self.BACKWARD)
+        distance = dist
 
-    print("Obstacle avoidance complete.")
+    return distance, np.radians(angle)
