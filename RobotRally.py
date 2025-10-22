@@ -51,7 +51,7 @@ landmarks = {
     4: (200.0, 200.0) # Coordinates for landmark 4
 }
 
-offset = 0.0
+offset = 0.0 
 goals = {
     1: (0.0 + offset, 0.0 + offset),
     2: (0.0 + offset, 200.0 - offset),
@@ -84,6 +84,8 @@ def sample_motion_model(particles_list, distance, angle, sigma_d, sigma_theta):
     
         particle.move_particle(p, delta_x, delta_y, angle)
     if not(distance == 0 and angle == 0):
+        particle.add_uncertainty(particles_list, sigma_d, sigma_theta)
+        sigma_d = sigma_d if distance != 0 else sigma_d * 0.1
         particle.add_uncertainty(particles_list, sigma_d, sigma_theta)
 
 
@@ -118,7 +120,7 @@ def measurement_model(particle_list, ObjectIDs, dists, angles, sigma_d, sigma_th
 
         particle.setWeight(p_observation_given_x)
 
-def inject_random_particles(particle_list, ratio=0.05):
+def inject_random_particles(particle_list, ratio=0.01):
     n_random = int(len(particle_list) * ratio)
     for i in range(n_random):
         particle_list[i] = particle.Particle(
@@ -128,7 +130,6 @@ def inject_random_particles(particle_list, ratio=0.05):
             1.0 / len(particle_list)
         )
     return particle_list
-
 
 def resample_particles(particle_list):
     weights = np.array([p.getWeight() for p in particle_list])
@@ -150,7 +151,6 @@ def resample_particles(particle_list):
         resampled.append(p_resampled)
 
     return resampled
-
 
 def filter_landmarks_by_distance(objectIDs, dists, angles):
     """
@@ -190,9 +190,15 @@ try:
 
     current_goal_idx = 0
 
-    just_moved_to_landmark = True
-    explore_steps_after_landmark = 12
+    just_moved_to_landmark = False
+    explore_steps_after_landmark = 18
     explore_counter = explore_steps_after_landmark
+    Landmarks_seen_this_step = []
+
+    pre_exploring = True
+    pre_explore_steps = 12
+
+    obstacle_detected = False
 
     #Initialize the robot
     if isRunningOnArlo():
@@ -218,74 +224,98 @@ try:
         if current_goal_idx >= len(landmark_order):
             print("All goals reached!")
             break
+
         # Use motor controls to update particles
         if isRunningOnArlo():
             counter +=1
             if counter > 1:
-                if just_moved_to_landmark:
-                    if explore_counter > 0:
-                        distance, angle = pathing.explore_step(False)
-                        explore_counter -= 1
-                        print(f"Exploring after reached landmark, steps left: {explore_counter}")
-                    else:
-                        just_moved_to_landmark = False
-                        distance, angle = 0,0
-                else:
+                if obstacle_detected:
+                    pathing.avoid_obstacle()
+                    obstacle_detected = False
+                elif pre_exploring:
+                    distance, angle, obstacle_detected = pathing.explore_step(False)
+                    pre_explore_steps -= 1
+                    if pre_explore_steps <= 0:
+                        pre_exploring = False
+                else:        
                     goal_id = landmark_order[current_goal_idx]  
                     goal = goals[goal_id]
-                    
+                    if just_moved_to_landmark:
+                        if explore_counter > 0:
+                            if goal_id in Landmarks_seen_this_step:
+                                distance, angle, obstacle_detected = pathing.move_towards_goal_step(est_pose, goal)
+                                explore_counter = explore_steps_after_landmark
+                            else:
+                                distance, angle, obstacle_detected = pathing.explore_step(False)
+                                explore_counter -= 1
+                                print(f"Exploring after reached landmark, steps left: {explore_counter}")
+                        else:
+                            just_moved_to_landmark = False
+                            distance, angle, obstacle_detected = 0,0, False
+                            current_goal_idx +=1
+                    else:
                     #print(f"{[est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20)}")
-                    #if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
-                    print(f"driving to_landmark {goal_id}")
-                    distance, angle = pathing.move_towards_goal_step(est_pose, goal)
-                    current_goal_idx +=1
-                    just_moved_to_landmark = True
-                    explore_counter = explore_steps_after_landmark
-                    #else:
-                    #    rrt = robot_RRT(
-                    #        start=[est_pose.getX(), est_pose.getY()],
-                    #        goal=[goal[0], goal[1]],
-                    #        robot_model=robot,
-                    #        map=grid_map,   
-                    #        )
-                    #    current_goal_idx += 1
-                    #    path =rrt.planning()
-                    #    smooth_path = rrt.smooth_path(path)
-                    #    moves = arlo.follow_path(smooth_path)
-                    #    for dist, ang in moves:
-                    #        sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
-                
+                        if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
+                            print(f"driving to_landmark {goal_id}")
+                            distance, angle, obstacle_detected = pathing.move_towards_goal_step(est_pose, goal)
+                            just_moved_to_landmark = True
+                            explore_counter = explore_steps_after_landmark
+                        else:
+                            print("RRT")
+                            rrt = robot_RRT(
+                                start=[est_pose.getX(), est_pose.getY()],
+                                goal=[goal[0], goal[1]],
+                                robot_model=robot,
+                                map=grid_map,   
+                                )
+                            print(f"{est_pose.getX(), est_pose.getY(), goal[0], goal[1]}")
+                            path =rrt.planning()
+                            if path is not None:
+                                smooth_path = rrt.smooth_path(path)
+                                rrt.draw_graph(smooth_path)
+                                moves, obstacle_detected = arlo.follow_path(smooth_path)
+                                if obstacle_detected:
+                                    just_moved_to_landmark = True
+                                    explore_steps_after_landmark = explore_counter
+                                for dist, ang in moves:
+                                    sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
+                            else:
+                                print("Path is none")
+                                break
+                    
         sample_motion_model(particles, distance, angle, sigma_d, sigma_theta)
         particles = inject_random_particles(particles, ratio=0.05)
         # Fetch next frame
         colour = cam.get_next_frame()
-        
+        Landmarks_seen_this_step.clear()
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
             objectIDs, dists, angles = filter_landmarks_by_distance(objectIDs, dists, angles)
             # List detected objects
             for i in range(len(objectIDs)):
+                Landmarks_seen_this_step.append(objectIDs[i])
                 print("Object ID = ", objectIDs[i], ", Distance = ", dists[i], ", angle = ", angles[i])
                 if objectIDs[i] in landmarkIDs:
-                    pathing.saw_landlanmark(objectIDs[i])
+                    pathing.saw_landmark(objectIDs[i])
                 if objectIDs[i] > 4: 
                     if objectIDs[i] in obstacleIds_detcted:
                         grid_map.remove_landmark(objectIDs[i])
-                    else: 
-                        obstacleIds_detcted.append(objectIDs[i])
-                        print("addded obstacle to grid")
-                        x_r = est_pose.getX()
-                        y_r = est_pose.getY()
-                        theta_r = est_pose.getTheta()
+                    obstacleIds_detcted.append(objectIDs[i])
+                    print("addded obstacle to grid")
+                    x_r = est_pose.getX()
+                    y_r = est_pose.getY()
+                    theta_r = est_pose.getTheta()
 
-                        # Convert to world coordinates
-                        x_obj = x_r + dists[i] * np.cos(theta_r + angles[i])
-                        y_obj = y_r + dists[i] * np.sin(theta_r + angles[i])
+                    # Convert to world coordinates
+                    x_obj = x_r + dists[i] * np.cos(theta_r + angles[i])
+                    y_obj = y_r + dists[i] * np.sin(theta_r + angles[i])
+                    print(f"{x_obj, y_obj}")
 
-                        # Add obstacle to grid
-                        grid_map.add_landmark(objectIDs[i],x_obj, y_obj, landmark_radius)
-                    
+                    # Add obstacle to grid
+                    grid_map.add_landmark(objectIDs[i],x_obj, y_obj, landmark_radius)
+                    grid_map.save_map(filename=f"grid{counter}.png")
+                
             # Compute particle weights
             measurement_model(particles, objectIDs, dists, angles, sigma_d_obs, sigma_theta_obs)
             # Resampling
@@ -304,8 +334,7 @@ try:
             # Draw map
             GUI.draw_world(est_pose, particles, world)
             cv2.imwrite(f"world{counter}.png", world)
-            #grid_map.save_map(filename=f"grid{counter}.png")
-
+            
 finally: 
     # Make sure to clean up even if an exception occurred
     

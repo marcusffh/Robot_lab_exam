@@ -28,10 +28,10 @@ class robot_RRT:
                  goal,
                  robot_model,   #model of the robot
                  map,           #map should allow the algorithm to query if the path in a node is in collision. note this will ignore the robot geom
-                 expand_dis=2, # maximum step size that the tree expands when a new node is added
+                 expand_dis=10, # maximum step size that the tree expands when a new node is added
                  path_resolution=5, #granularity of checking path for collinsions
-                 goal_sample_rate=40,
-                 max_iter=500,
+                 goal_sample_rate=20,
+                 max_iter=1000,
                  ):
 
         self.start = self.Node(start)

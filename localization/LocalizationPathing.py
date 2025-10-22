@@ -39,11 +39,11 @@ class LocalizationPathing:
                 self.robot.turn_angle(-45)
                 angle_rad = np.radians(-45)
 
-            self.robot.drive_distance_cm(dist)
+            dist, obstacle_detected = self.robot.drive_distance_cm(dist)
 
-        return dist, angle_rad
+        return dist, angle_rad, obstacle_detected
     
-    def saw_landlanmark(self, landmarkID):
+    def saw_landmark(self, landmarkID):
         """
         Register that a landmark with a given ID has been seen.
         """
@@ -58,7 +58,6 @@ class LocalizationPathing:
         Returns True if at least `min_landmarks_seen` have been observed.
         """
         return self.min_landmarks_met
-    
 
     
     def move_towards_goal_step(self, est_pose, goal):
@@ -67,7 +66,7 @@ class LocalizationPathing:
         distance_to_goal = np.linalg.norm(direction)
         angle_to_goal = np.arctan2(direction[1], direction[0]) - est_pose.getTheta()
         
-        move_dist = distance_to_goal
+        move_dist = distance_to_goal - 12.5
         angle_to_goal = (angle_to_goal + np.pi) % (2 * np.pi) - np.pi
         
         print(f"distance moved: {distance_to_goal}")
@@ -75,10 +74,37 @@ class LocalizationPathing:
 
         self.robot.turn_angle(np.degrees(angle_to_goal))
 
-        self.robot.drive_distance_cm(move_dist - 10)
+        distance, obstacleDetected = self.robot.drive_distance_cm(move_dist)
         self.robot.stop()
         time.sleep(0.2)
 
-        return distance_to_goal, angle_to_goal
+        return distance, angle_to_goal, obstacleDetected
 
 
+def avoid_obstacle(self,  dist = 10, turn_angle=45, stop_threshold=25):
+    """
+    Reads proximity sensors and performs a short avoidance maneuver toward
+    the side with more free space.
+    """
+    left, center, right = self.proximity_check()
+    angle = 0
+    distance = 0
+    # Determine which side is more open
+    if left > right:
+        self.turn_angle(turn_angle)
+        angle = turn_angle
+
+    else:
+        self.turn_angle(-turn_angle)
+        angle = -turn_angle
+
+    # Optionally, check again after turning
+    left, center, right = self.proximity_check()
+
+    # If still too close, back up a bit
+    if min(left, center, right) < stop_threshold:
+        print("Still too close, backing up")
+        self.drive_distance_cm(dist, direction=self.BACKWARD)
+        distance = dist
+
+    return distance, np.radians(angle)
