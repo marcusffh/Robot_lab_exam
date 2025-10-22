@@ -1,5 +1,6 @@
 import numpy as np
 from localization.random_numbers import rand_von_mises, randn
+from scipy.stats import norm
 
 
 class Particle(object):
@@ -86,3 +87,87 @@ def add_uncertainty_von_mises(particles_list, sigma, theta_kappa):
         particle.x += randn(0.0, sigma)
         particle.y += randn(0.0, sigma)
         particle.theta = np.mod(rand_von_mises(particle.theta, theta_kappa), 2.0 * np.pi) - np.pi
+
+
+def initialize_particles(num_particles):
+    particles = []
+    for i in range(num_particles):
+        p = Particle(520.0*np.random.ranf() - 120.0, 420.0*np.random.ranf() - 120.0, np.mod(2.0*np.pi*np.random.ranf(), 2.0*np.pi), 1.0/num_particles)
+        particles.append(p)
+
+    return particles
+
+def sample_motion_model(particles_list, distance, angle, sigma_d, sigma_theta):
+    for p in particles_list:
+        delta_x = distance * np.cos(p.getTheta() + angle)
+        delta_y = distance * np.sin(p.getTheta() + angle)
+    
+        move_particle(p, delta_x, delta_y, angle)
+    if not(distance == 0 and angle == 0):
+        add_uncertainty(particles_list, sigma_d, sigma_theta)
+        sigma_d = sigma_d if distance != 0 else sigma_d * 0.1
+        add_uncertainty(particles_list, sigma_d, sigma_theta)
+
+
+def measurement_model(particle_list, ObjectIDs, landmarkIDs, landmarks, dists, angles, sigma_d, sigma_theta):
+    for particle in particle_list:
+        x_i = particle.getX()
+        y_i = particle.getY()
+        theta_i = particle.getTheta()
+
+        p_observation_given_x = 1.0
+
+        #p(z|x) = sum over the probability for all landmarks
+        for landmarkID, dist, angle in zip(ObjectIDs, dists, angles):
+            if landmarkID in landmarkIDs:
+                l_x, l_y = landmarks[landmarkID]
+                d_i = np.sqrt((l_x - x_i)**2 + (l_y - y_i)**2)
+
+                p_d_m = norm.pdf(dist, loc=d_i, scale=sigma_d)
+
+                e_theta = np.array([np.cos(theta_i), np.sin(theta_i)])
+                e_theta_hat = np.array([-np.sin(theta_i), np.cos(theta_i)])
+
+                e_l = np.array([l_x - x_i, l_y - y_i]) / d_i
+
+                dot = np.clip(np.dot(e_l, e_theta), -1.0, 1.0)
+                phi_i = np.sign(np.dot(e_l, e_theta_hat)) * np.arccos(dot)
+                
+                p_phi_m = norm.pdf(angle,loc=phi_i, scale=sigma_theta)
+
+
+                p_observation_given_x *= (p_d_m * p_phi_m)
+
+        particle.setWeight(p_observation_given_x)
+
+def inject_random_particles(particle_list, ratio=0.01):
+    n_random = int(len(particle_list) * ratio)
+    for i in range(n_random):
+        particle_list[i] = Particle(
+            520.0 * np.random.ranf() - 120.0,
+            420.0 * np.random.ranf() - 120.0,
+            np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
+            1.0 / len(particle_list)
+        )
+    return particle_list
+
+def resample_particles(particle_list):
+    weights = np.array([p.getWeight() for p in particle_list])
+    total_weight = np.sum(weights)
+    weights /= total_weight
+
+    cdf = np.cumsum(weights)
+    resampled = []
+
+    for _ in range(len(particle_list)):
+        z = np.random.rand()
+        idx = np.searchsorted(cdf, z)
+        p_resampled = Particle(
+            particle_list[idx].getX(),
+            particle_list[idx].getY(),
+            particle_list[idx].getTheta(),
+            1.0 / len(particle_list)
+        )
+        resampled.append(p_resampled)
+
+    return resampled
