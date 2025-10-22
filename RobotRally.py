@@ -72,7 +72,6 @@ GUI = SelflocalizeGUI(landmarkIDs, landmark_colors, landmarks)
 def initialize_particles(num_particles):
     particles = []
     for i in range(num_particles):
-        # Random starting points. 
         p = particle.Particle(520.0*np.random.ranf() - 120.0, 420.0*np.random.ranf() - 120.0, np.mod(2.0*np.pi*np.random.ranf(), 2.0*np.pi), 1.0/num_particles)
         particles.append(p)
 
@@ -172,7 +171,7 @@ def filter_landmarks_by_distance(objectIDs, dists, angles):
 # Main program #
 try:
     # Initialize particles
-    num_particles = 1000
+    num_particles = 2000
     particles = initialize_particles(num_particles)
 
     est_pose = particle.estimate_pose(particles) # The estimate of the robots current pose
