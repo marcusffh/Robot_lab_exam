@@ -66,7 +66,7 @@ class LocalizationPathing:
         distance_to_goal = np.linalg.norm(direction)
         angle_to_goal = np.arctan2(direction[1], direction[0]) - est_pose.getTheta()
         
-        move_dist = distance_to_goal
+        move_dist = distance_to_goal - 12.5
         angle_to_goal = (angle_to_goal + np.pi) % (2 * np.pi) - np.pi
         
         print(f"distance moved: {distance_to_goal}")
@@ -74,7 +74,7 @@ class LocalizationPathing:
 
         self.robot.turn_angle(np.degrees(angle_to_goal))
 
-        self.robot.drive_distance_cm(move_dist - 10)
+        self.robot.drive_distance_cm(move_dist)
         self.robot.stop()
         time.sleep(0.2)
 

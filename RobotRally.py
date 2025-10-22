@@ -258,7 +258,7 @@ try:
                         else:
                             rrt = robot_RRT(
                                 start=[est_pose.getX(), est_pose.getY()],
-                                goal=[goal[0], goal[1]],
+                                goal=[goal[0] - 10, goal[1] - 10],
                                 robot_model=robot,
                                 map=grid_map,   
                                 )
