@@ -94,9 +94,9 @@ def measurement_model(particle_list, ObjectIDs, dists, angles, sigma_d, sigma_th
         y_i = particle.getY()
         theta_i = particle.getTheta()
 
-        p_observation_given_x = 1.0
+        log_p_observation_given_x = 0.0  # use log probability
 
-        #p(z|x) = sum over the probability for all landmarks
+        # p(z|x) = product over the probability for all landmarks (log space)
         for landmarkID, dist, angle in zip(ObjectIDs, dists, angles):
             if landmarkID in landmarkIDs:
                 l_x, l_y = landmarks[landmarkID]
@@ -111,13 +111,12 @@ def measurement_model(particle_list, ObjectIDs, dists, angles, sigma_d, sigma_th
 
                 dot = np.clip(np.dot(e_l, e_theta), -1.0, 1.0)
                 phi_i = np.sign(np.dot(e_l, e_theta_hat)) * np.arccos(dot)
-                
-                p_phi_m = norm.pdf(angle,loc=phi_i, scale=sigma_theta)
 
+                p_phi_m = norm.pdf(angle, loc=phi_i, scale=sigma_theta)
 
-                p_observation_given_x *= p_d_m* p_phi_m
+                log_p_observation_given_x += np.log(p_d_m * p_phi_m + 1e-12) 
 
-        particle.setWeight(p_observation_given_x)
+        particle.setWeight(np.exp(log_p_observation_given_x))
 
 
 def resample_particles(particle_list):
