@@ -5,20 +5,37 @@ import random_numbers as rn
 This util file contains a particle class along with function for use in a particle filter.
 The correct way to utilize the filter is in the following order
 
-Initilize particle
-estimate pose
 
-Loop:
-    move
-    prediction_step
-        (rejuvenation)????
-    correction_step
-    resampling_step
-    estimate_pose
-    rejuvenation_atep
+1. Initialize particle set:
+       particles = initialize_particles(N)
+       pose_estimate = estimate_pose(particles)
 
+2. Main loop:
+       # Get robot motion (odometry or control inputs)
+       distance, angle_change = get_robot_motion()
 
+       # Predict where each particle moves
+       prediction_step(particles, distance, angle_change)
+
+       # Update particle weights based on measurements
+       correction_step(particles, ids, dists, angles, LANDMARKS)
+
+       # Resample particles according to weights
+       particles = resampling_step(particles)
+
+       # Estimate current pose before adding random diversity
+       pose_estimate = estimate_pose(particles)
+
+       # Optional: rejuvenate to maintain diversity for next cycle
+       particles = rejuvenate_particles(particles, rejuvenation_ratio=0.05)
+
+Notes:
+- Rejuvenation happens **after** pose estimation, not before.
+- The prediction step already adds motion uncertainty; do not duplicate it.
+- Always normalize particle weights before resampling.
 """
+
+
 
 
 
@@ -122,6 +139,7 @@ def initialize_particles(num_particles):
 
 #impiment motion model
 #Used for the prediction step
+# sigma and theta needs to be constant
 
 
 # ------------------------ Self implimented particle filter---------------------------------------------
