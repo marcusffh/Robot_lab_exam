@@ -74,8 +74,8 @@ def add_uncertainty(particles_list, sigma, sigma_theta):
     """Add some noise to each particle in the list. Sigma and sigma_theta is the noise
     variances for position and angle noise."""
     for particle in particles_list:
-        particle.x += rn.randn(0.0, sigma)
-        particle.y += rn.randn(0.0, sigma)
+        particle.x += randn(0.0, sigma)
+        particle.y += randn(0.0, sigma)
         particle.theta = np.mod(particle.theta + randn(0.0, sigma_theta), 2.0 * np.pi) 
 
 
