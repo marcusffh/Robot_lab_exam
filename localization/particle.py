@@ -109,7 +109,21 @@ def sample_motion_model(particles_list, distance, angle, sigma_d, sigma_theta):
         add_uncertainty(particles_list, sigma_d, sigma_theta)
 
 
-def measurement_model(particle_list, ObjectIDs, landmarkIDs, landmarks, dists, angles, sigma_d, sigma_theta):
+from scipy.stats import norm
+import numpy as np
+
+def measurement_model(particle_list, ObjectIDs, landmark_manager, sigma_d, sigma_theta, dists, angles):
+    """
+    Updates particle weights based on observations.
+
+    particle_list : list of Particle objects
+    ObjectIDs : list of observed landmark IDs
+    landmark_manager : LandmarkManager object
+    dists : list of distances to observed landmarks
+    angles : list of angles to observed landmarks
+    sigma_d : std deviation for distance
+    sigma_theta : std deviation for angle
+    """
     for particle in particle_list:
         x_i = particle.getX()
         y_i = particle.getY()
@@ -117,12 +131,12 @@ def measurement_model(particle_list, ObjectIDs, landmarkIDs, landmarks, dists, a
 
         p_observation_given_x = 1.0
 
-        #p(z|x) = sum over the probability for all landmarks
         for landmarkID, dist, angle in zip(ObjectIDs, dists, angles):
-            if landmarkID in landmarkIDs:
-                l_x, l_y = landmarks[landmarkID]
+            lm = landmark_manager.landmarks.get(landmarkID)
+            if lm is not None:
+                l_x, l_y = lm.x, lm.y
                 d_i = np.sqrt((l_x - x_i)**2 + (l_y - y_i)**2)
-
+                
                 p_d_m = norm.pdf(dist, loc=d_i, scale=sigma_d)
 
                 e_theta = np.array([np.cos(theta_i), np.sin(theta_i)])
@@ -133,12 +147,12 @@ def measurement_model(particle_list, ObjectIDs, landmarkIDs, landmarks, dists, a
                 dot = np.clip(np.dot(e_l, e_theta), -1.0, 1.0)
                 phi_i = np.sign(np.dot(e_l, e_theta_hat)) * np.arccos(dot)
                 
-                p_phi_m = norm.pdf(angle,loc=phi_i, scale=sigma_theta)
-
+                p_phi_m = norm.pdf(angle, loc=phi_i, scale=sigma_theta)
 
                 p_observation_given_x *= (p_d_m * p_phi_m)
 
         particle.setWeight(p_observation_given_x)
+
 
 def inject_random_particles(particle_list, ratio=0.01):
     n_random = int(len(particle_list) * ratio)

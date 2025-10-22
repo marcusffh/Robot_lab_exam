@@ -17,32 +17,24 @@ from Utils.robot_model import RobotModel
 from Utils.robot_RRT import robot_RRT
 from localization.selflocalizeGUI import SelflocalizeGUI
 from Utils.Robot import Robot
+from Utils.Landmark import Landmark, LandmarkManager
 
-# Some color constants in BGR format
-CRED = (0, 0, 255)
-CGREEN = (0, 255, 0)
-CBLUE = (255, 0, 0)
-CYELLOW = (0, 255, 255)
+landmarks = [
+    Landmark(1, 0, 0, 20),
+    Landmark(2, 0, 200, 20),
+    Landmark(3, 200, 0, 20),
+    Landmark(4, 200, 200, 20),
+]
 
-# Landmarks.
-landmarkIDs = [1, 2, 3, 4]
-landmarks = {
-    1: (0.0, 0.0),  # Coordinates for landmark 1
-    2: (0.0, 200.0), # Coordinates for landmark 2
-    3: (200.0, 0.0), # Coordinates for landmark 3
-    4: (200.0, 200.0) # Coordinates for landmark 4
-}
 driving_order = [1,2,3,4,1]
+landmark_manager = LandmarkManager(landmarks, driving_order)
 
-landmark_radius = 20
 
-landmark_colors = [CRED, CGREEN, CBLUE, CYELLOW]
+#obstacleIds_detcted = []
 
-obstacleIds_detcted = []
+GUI = SelflocalizeGUI(landmarks)
 
-GUI = SelflocalizeGUI(landmarkIDs, landmark_colors, landmarks)
-
-def filter_landmarks_by_distance(objectIDs, dists, angles):
+def filter_objects_by_distance(objectIDs, dists, angles):
     """
     Keep only the measurement at the smallest distance for each landmark ID.
     """
@@ -58,19 +50,16 @@ def filter_landmarks_by_distance(objectIDs, dists, angles):
 
     return filtered_ids, filtered_dists, filtered_angles
 
-def add_obstacle_to_grid(obstacleID):
-    print("addded obstacle to grid")
-    x_r = est_pose.getX()
-    y_r = est_pose.getY()
-    theta_r = est_pose.getTheta()
-
+def add_obstacle_to_grid(grid_map, obstacle_manager, obstacle_id, est_pose, dist, angle, landmark_radius, timestep):
     # Convert to world coordinates
-    x_obj = x_r + dists[i] * np.cos(theta_r + angles[i])
-    y_obj = y_r + dists[i] * np.sin(theta_r + angles[i])
-    print(f"{x_obj, y_obj}")
-
-    # Add obstacle to grid
-    grid_map.add_landmark(obstacleID[i],x_obj, y_obj, landmark_radius)
+    x_obj = est_pose.getX() + dist * np.cos(est_pose.getTheta() + angle)
+    y_obj = est_pose.getY() + dist * np.sin(est_pose.getTheta() + angle)
+    
+    # Add obstacle to ObstacleManager
+    obstacle_manager.add_obstacle(obstacle_id, x_obj, y_obj, landmark_radius)
+    
+    # Add obstacle to grid and save
+    grid_map.add_landmark(obstacle_id, x_obj, y_obj, landmark_radius)
     grid_map.save_map(filename=f"grid{timestep}.png")
 
 # Main program #
@@ -93,11 +82,9 @@ try:
 
     timestep = 0
 
-    current_goal_idx = 0
     explore_steps = 16
     pre_explore_steps = 12
     explore_counter = explore_steps
-    landmarks_seen_last_timestep = []
     object_detected = False
     state = "pre_explore"
 
@@ -110,14 +97,14 @@ try:
 
     #initialize helper modules    
     cam = camera.Camera(1, robottype='arlo', useCaptureThread=False)
-    pathing = LocalizationPathing(arlo, landmarkIDs)
+    pathing = LocalizationPathing(arlo, landmark_manager.get_all_ids())
     landmark_utils = LandmarkUtils(cam, arlo)
     grid_map = LandmarkOccupancyGrid(low=(-120,-120), high=(520, 420), res=5.0)
     robot = RobotModel()
 
     while True:
         timestep += 1
-        if current_goal_idx >= len(driving_order):
+        if landmark_manager.get_current_goal is None():
             print("All goals reached!")
             break
 
@@ -139,10 +126,7 @@ try:
 
         elif state == "explore":
             if explore_counter > 0:
-                goal_id = driving_order[current_goal_idx]
-                prev_goal_id = driving_order[current_goal_idx - 1]
-                if prev_goal_id in landmarks_seen_last_timestep:
-                    current_goal_idx -= 1
+                if landmark_manager.current_goal_seen_last_timestep():
                     state = "navigate"
                 else:
                     distance, angle, object_detected = pathing.explore_step(False)
@@ -152,20 +136,19 @@ try:
                 if object_detected:
                     state = "steer_away_from_object"
                 elif explore_counter <= 0:
+                    landmark_manager.advance_to_next_goal()
                     state = "navigate"
 
         elif state == "navigate":
-            goal_id = driving_order[current_goal_idx]
-            goal = landmarks[goal_id]
-            print(f"Navigating to goal {goal_id}")
+            goal_position = landmark_manager.get_current_goal_position()
+            print(f"Navigating to goal {landmark_manager.get_current_goal_id()}")
 
             # Check if direct path is clear
-            if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
-                distance, angle, object_detected = pathing.move_towards_goal_step(est_pose, goal)
+            if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal_position[0], goal_position[1]], r_robot=20):
+                distance, angle, object_detected = pathing.move_towards_goal_step(est_pose, goal_position)
                 if object_detected:
                     state = "steer_away_from_object"
                 else:
-                    current_goal_idx +=1
                     explore_counter = explore_steps
                     state = "explore"
             else:
@@ -173,7 +156,7 @@ try:
                 print("Path blocked by obstacle, using RRT")
                 rrt = robot_RRT(
                     start=[est_pose.getX(), est_pose.getY()],
-                    goal=[goal[0], goal[1]],
+                    goal=[goal_position[0], goal_position[1]],
                     robot_model=robot,
                     map=grid_map,
                 )
@@ -198,17 +181,16 @@ try:
         particle.sample_motion_model(particles, distance, angle, sigma_d, sigma_theta)
         # Fetch next frame
         colour = cam.get_next_frame()
-        landmarks_seen_last_timestep.clear()
+        landmark_manager.clear_landmarks_seen_last_timestep()
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
-            objectIDs, dists, angles = filter_landmarks_by_distance(objectIDs, dists, angles)
+            objectIDs, dists, angles = filter_objects_by_distance(objectIDs, dists, angles)
             # List detected objects
             for i in range(len(objectIDs)):
-                landmarks_seen_last_timestep.append(objectIDs[i])
                 print("Object ID = ", objectIDs[i], ", Distance = ", dists[i], ", angle = ", angles[i])
-                if objectIDs[i] in landmarkIDs:
-                    pathing.saw_landmark(objectIDs[i])
+                if objectIDs[i] in landmark_manager.get_all_ids():
+                    landmark_manager.add_landmarks_seen_last_timestep(objectIDs[i])
                 if objectIDs[i] > 4: 
                     if objectIDs[i] in obstacleIds_detcted:
                         grid_map.remove_landmark(objectIDs[i])
@@ -216,7 +198,7 @@ try:
                     add_obstacle_to_grid(objectIDs)
                 
             # Compute particle weights
-            particle.measurement_model(particles, objectIDs, landmarkIDs, landmarks, dists, angles, sigma_d_obs, sigma_theta_obs)
+            particle.measurement_model(particles, objectIDs, landmark_manager, dists, angles, sigma_d_obs, sigma_theta_obs)
             # Resampling
             particles = particle.resample_particles(particles)
 

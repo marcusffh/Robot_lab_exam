@@ -81,19 +81,19 @@ class LocalizationPathing:
         return distance, angle_to_goal, object_detected
 
 
-def steer_away_from_object(self, turn_angle=45, stop_threshold=25):
-    left, center, right = self.proximity_check()
-    angle_turned = 0
-    distance_moved = 0
+    def steer_away_from_object(self, turn_angle=45, stop_threshold=25):
+        left, center, right = self.proximity_check()
+        angle_turned = 0
+        distance_moved = 0
 
-    # If any sensor is below threshold, decide which way to turn
-    if left < stop_threshold or center < stop_threshold or right < stop_threshold:
-        if left > right:
-            self.turn_angle(turn_angle)  # turn left
-            angle_turned = np.radians(turn_angle)
-        else:
-            self.turn_angle(-turn_angle)  # turn right
-            angle_turned = np.radians(-turn_angle)
+        # If any sensor is below threshold, decide which way to turn
+        if left < stop_threshold or center < stop_threshold or right < stop_threshold:
+            if left > right:
+                self.turn_angle(turn_angle)  # turn left
+                angle_turned = np.radians(turn_angle)
+            else:
+                self.turn_angle(-turn_angle)  # turn right
+                angle_turned = np.radians(-turn_angle)
 
-    return distance_moved, angle_turned
+        return distance_moved, angle_turned
 

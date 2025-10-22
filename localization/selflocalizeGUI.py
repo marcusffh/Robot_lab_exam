@@ -1,13 +1,23 @@
 import cv2
 import numpy as np
-import sys
-class SelflocalizeGUI(object):
-    def __init__(self, landmarkIDs, landmark_colors, landmarks):
-        self.landmarkIDs = landmarkIDs
-        self.landmark_colors = landmark_colors
+import random
+
+class SelflocalizeGUI:
+
+    def __init__(self, landmarks):
+        """
+        landmarks: list of Landmark objects
+        """
         self.landmarks = landmarks
         self.CMAGENTA = (255, 0, 255)
         self.CWHITE = (255, 255, 255)
+
+        # Assign each landmark a random color
+        self.landmark_colors = {lm.id: (
+            random.randint(0, 255),
+            random.randint(0, 255),
+            random.randint(0, 255)
+        ) for lm in landmarks}
 
     def jet(self, x):
         r = (x >= 3.0/8.0 and x < 5.0/8.0) * (4.0 * x - 3.0/2.0) + (x >= 5.0/8.0 and x < 7.0/8.0) + (x >= 7.0/8.0) * (-4.0 * x + 9.0/2.0)
@@ -21,8 +31,8 @@ class SelflocalizeGUI(object):
         ymax = world.shape[0]
         world[:] = self.CWHITE
 
+        # Draw particles
         max_weight = max([p.getWeight() for p in particles]) if particles else 1.0
-
         for particle in particles:
             x = int(particle.getX() + offsetX)
             y = ymax - int(particle.getY() + offsetY)
@@ -34,11 +44,12 @@ class SelflocalizeGUI(object):
             )
             cv2.line(world, (x, y), b, colour, 2)
 
-        for i, ID in enumerate(self.landmarkIDs):
-            lm_x, lm_y = self.landmarks[ID]
-            lm_screen = (int(lm_x + offsetX), int(ymax - (lm_y + offsetY)))
-            cv2.circle(world, lm_screen, 5, self.landmark_colors[i], -1)
+        # Draw landmarks
+        for lm in self.landmarks:
+            lm_screen = (int(lm.x + offsetX), ymax - int(lm.y + offsetY))
+            cv2.circle(world, lm_screen, int(lm.radius), self.landmark_colors[lm.id], -1)
 
+        # Draw estimated robot pose
         a = (int(est_pose.getX()) + offsetX, ymax - (int(est_pose.getY()) + offsetY))
         b = (
             int(est_pose.getX() + 15.0 * np.cos(est_pose.getTheta())) + offsetX,
