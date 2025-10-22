@@ -94,9 +94,9 @@ def measurement_model(particle_list, ObjectIDs, dists, angles, sigma_d, sigma_th
         y_i = particle.getY()
         theta_i = particle.getTheta()
 
-        log_p_observation_given_x = 0.0  # use log probability
+        p_observation_given_x = 1.0
 
-        # p(z|x) = product over the probability for all landmarks (log space)
+        #p(z|x) = sum over the probability for all landmarks
         for landmarkID, dist, angle in zip(ObjectIDs, dists, angles):
             if landmarkID in landmarkIDs:
                 l_x, l_y = landmarks[landmarkID]
@@ -111,12 +111,13 @@ def measurement_model(particle_list, ObjectIDs, dists, angles, sigma_d, sigma_th
 
                 dot = np.clip(np.dot(e_l, e_theta), -1.0, 1.0)
                 phi_i = np.sign(np.dot(e_l, e_theta_hat)) * np.arccos(dot)
+                
+                p_phi_m = norm.pdf(angle,loc=phi_i, scale=sigma_theta)
 
-                p_phi_m = norm.pdf(angle, loc=phi_i, scale=sigma_theta)
 
-                log_p_observation_given_x += np.log(p_d_m * p_phi_m + 1e-12) 
+                p_observation_given_x *= (p_d_m * p_phi_m)
 
-        particle.setWeight(np.exp(log_p_observation_given_x))
+        particle.setWeight(p_observation_given_x)
 
 
 def resample_particles(particle_list):
@@ -138,7 +139,7 @@ def resample_particles(particle_list):
         )
         resampled.append(p_resampled)
 
-    rejuvenation_ratio = 0.025 
+    rejuvenation_ratio = 0.05 
     n_random = int(len(particle_list) * rejuvenation_ratio)
 
     for i in range(n_random):
@@ -181,7 +182,7 @@ try:
     distance = 0.0 # distance driven at this time step
     angle = 0.0 # angle turned at this timestep
 
-    sigma_d = 10
+    sigma_d = 15
     sigma_theta = 0.03
     sigma_d_obs = 20
     sigma_theta_obs = 0.05
