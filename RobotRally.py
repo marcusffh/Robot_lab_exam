@@ -221,7 +221,7 @@ try:
         cam = camera.Camera(0, robottype='macbookpro', useCaptureThread=False)
 
     while True:
-        if current_goal_idx > len(landmark_order):
+        if current_goal_idx >= len(landmark_order):
             print("All goals reached!")
             break
         # Use motor controls to update particles
