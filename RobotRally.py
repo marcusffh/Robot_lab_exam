@@ -262,10 +262,11 @@ try:
                                 robot_model=robot,
                                 map=grid_map,   
                                 )
-                            current_goal_idx += 1
                             path =rrt.planning()
                             smooth_path = rrt.smooth_path(path)
                             moves = arlo.follow_path(smooth_path)
+                            just_moved_to_landmark = True
+                            explore_steps_after_landmark = explore_counter
                             for dist, ang in moves:
                                 sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
                     
