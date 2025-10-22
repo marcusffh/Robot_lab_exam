@@ -1,6 +1,27 @@
 import numpy as np
 import random_numbers as rn
 
+"""
+This util file contains a particle class along with function for use in a particle filter.
+The correct way to utilize the filter is in the following order
+
+Initilize particle
+estimate pose
+
+Loop:
+    move
+    prediction_step
+        (rejuvenation)????
+    correction_step
+    resampling_step
+    estimate_pose
+    rejuvenation_atep
+
+
+"""
+
+
+
 class Particle(object):
     """Data structure for storing particle information (state and weight)"""
     def __init__(self, x=0.0, y=0.0, theta=0.0, weight=0.0):
@@ -107,52 +128,11 @@ def initialize_particles(num_particles):
 
 # PREDICTION STEP (SAMPLING STEP)  
 # The motion modeL
-def motion_model_odometry(particle, distance, angle_change, sigma_d=2.0, sigma_theta=0.05):
-    """
-    A motion model is a mathematical model that describes how the robots pose is likely
-    to change from one time step to the next, given its control inputs, It is used in the 
-    prediction step of the particle filter. It helps predict where the robot is after a
-    moveset.
-    
-    Args:
-        particle: Particle object to update
-        distance: Distance driven in cm
-        angle_change: Rotation angle in radians
-        sigma_d: Standard deviation for distance noise (cm). Please Tune as neede
-        sigma_theta: Standard deviation for angular noise (radians). Please tune as needed
-    """
-    
-    # Step 1: Turn with noise
-    noisy_turn = angle_change + rn.randn(0.0, sigma_theta)
-    particle.theta = np.mod(particle.theta + noisy_turn, 2.0 * np.pi)
-    
-    # Step 2: Drive with noise in the new orientation
-    noisy_distance = distance + rn.randn(0.0, sigma_d)
-    particle.x += noisy_distance * np.cos(particle.theta)
-    particle.y += noisy_distance * np.sin(particle.theta)
-
-#Converter
-def robot_command_to_motion(turn_degrees, drive_meters):
-    """
-    Converts the calibratedRobot turn and drive functions, into input that the motion-
-    model can take.
-    
-    Args:
-        turn_degrees: Angle turned by robot (positive = left, negative = right)
-        drive_meters: Distance driven in meters
-    
-    Returns:
-        distance (cm), angle_change (radians)
-    """
-    distance_cm = drive_meters * 100.0  # Convert meters to cm
-    angle_rad = np.deg2rad(turn_degrees)  # Convert degrees to radians
-    
-    return distance_cm, angle_rad
-
-# actual prediction step
 def prediction_step(particles, distance, angle_change, sigma_d=2.0, sigma_theta=0.05):
     """
-    Apply motion model to ALL particles.
+    Particle filter prediction step.
+    1. Moves all particles deterministically based on odometry.
+    2. Adds Gaussian uncertainty using add_uncertainty().
     
     Args:
         particles: List of Particle objects
@@ -161,8 +141,14 @@ def prediction_step(particles, distance, angle_change, sigma_d=2.0, sigma_theta=
         sigma_d: Position uncertainty (cm)
         sigma_theta: Angular uncertainty (radians)
     """
+    # --- Step 1: Deterministic motion update ---
     for particle in particles:
-        motion_model_odometry(particle, distance, angle_change, sigma_d, sigma_theta)
+        particle.theta = np.mod(particle.theta + angle_change, 2.0 * np.pi)
+        particle.x += distance * np.cos(particle.theta)
+        particle.y += distance * np.sin(particle.theta)
+    
+    # --- Step 2: Add Gaussian motion noise ---
+    add_uncertainty(particles, sigma_d, sigma_theta)
 
 #----------------------------------------------------------------------------------------------------
 
@@ -206,10 +192,10 @@ def correction_step(particles, ids, dists, angles,LANDMARKS, sigma_d=10.0, sigma
             
             landmark_pos = LANDMARKS[landmark_id]
             
-
             # -------------------------------
             # Distance Part (Formula 2)
             # -------------------------------
+
             #d^{(i)} = \sqrt{(l_x -x^{(i)})^2 + (l_y - y^{(i)})^2} essentially
             dx = landmark_pos[0] - particle.x #(l_x - x^(i))
             dy = landmark_pos[1] - particle.y #(l_y - y^(i))
@@ -221,9 +207,6 @@ def correction_step(particles, ids, dists, angles,LANDMARKS, sigma_d=10.0, sigma
             # Equation 2 from the pdf: distance probability
             prob_dist = coef_distance * np.exp(- (dists[i] - euclidean_distance)**2 / ( 2 * sigma_d**2)) 
 
-
-
-            
             # -------------------------------
             # Orientation Part (Formula 3)
             # -------------------------------
@@ -288,3 +271,34 @@ def resampling_step(particles):
         resampled_particles.append(new_p)
 
     return resampled_particles
+
+
+#--------------------------------------------------------------------
+# Rejuvenation step
+def rejuvenation_step(particles, rejuvenation_ratio = 0.05, map_bounds= (520 , 420 , -120 ,- 120)):
+    """
+    introduces new particles into the filter to avoid colaps of diversity.
+    
+    args:
+        particles: List of particles
+        rejuvenation_ratio: fraction of particles to replace
+        map_bounds:  (x_max, y_max , x_min, y_min)
+    """
+    N = len(particles)
+
+    #Determine number of particles to rejuvenate
+    n_random = int(N * rejuvenation_ratio)
+    if n_random <= 0:
+        return particles
+    
+    #extract map bounds
+    x_max , y_max , x_min, y_min = map_bounds
+    for i in range(n_random):
+        particles[i] = Particle(
+            np.random.uniform(x_min, x_max), # X
+            np.random.uniform(y_min, y_max), # Y
+            np.random.uniform(0, 2.0 * np.pi), # Theta
+            1.0 /N #weight
+        )
+
+    return particles
