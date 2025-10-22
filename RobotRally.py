@@ -139,7 +139,7 @@ def resample_particles(particle_list):
         )
         resampled.append(p_resampled)
 
-    rejuvenation_ratio = 0.025  # 5% random new particles
+    rejuvenation_ratio = 0.025 
     n_random = int(len(particle_list) * rejuvenation_ratio)
 
     for i in range(n_random):
