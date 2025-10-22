@@ -196,7 +196,7 @@ try:
 
     current_goal_idx = 0
 
-    just_moved_to_landmark = False
+    just_moved_to_landmark = True
     explore_steps_after_landmark = 12
     explore_counter = 0
 
@@ -228,10 +228,7 @@ try:
         if isRunningOnArlo():
             counter +=1
             if counter > 1:
-                if not (pathing.seen_enough_landmarks()):
-                    distance, angle = pathing.explore_step(False)
-                    print("exploring")
-                elif pathing.seen_enough_landmarks() and just_moved_to_landmark:
+                if just_moved_to_landmark:
                     if explore_counter > 0:
                         distance, angle = pathing.explore_step(False)
                         explore_counter -= 1
