@@ -256,6 +256,7 @@ try:
                             just_moved_to_landmark = True
                             explore_counter = explore_steps_after_landmark
                         else:
+                            print("RRT")
                             rrt = robot_RRT(
                                 start=[est_pose.getX(), est_pose.getY()],
                                 goal=[goal[0] - 10, goal[1] - 10],
@@ -263,13 +264,17 @@ try:
                                 map=grid_map,   
                                 )
                             path =rrt.planning()
-                            smooth_path = rrt.smooth_path(path)
-                            rrt.draw_graph(smooth_path)
-                            moves = arlo.follow_path(smooth_path)
-                            just_moved_to_landmark = True
-                            explore_steps_after_landmark = explore_counter
-                            for dist, ang in moves:
-                                sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
+                            if smooth_path is not None:
+                                smooth_path = rrt.smooth_path(path)
+                                rrt.draw_graph(smooth_path)
+                                moves = arlo.follow_path(smooth_path)
+                                just_moved_to_landmark = True
+                                explore_steps_after_landmark = explore_counter
+                                for dist, ang in moves:
+                                    sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
+                            else:
+                                print("Path is none")
+                                break
                     
         sample_motion_model(particles, distance, angle, sigma_d, sigma_theta)
         particles = inject_random_particles(particles, ratio=0.05)
