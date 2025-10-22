@@ -51,7 +51,7 @@ landmarks = {
     4: (200.0, 150.0) # Coordinates for landmark 4
 }
 
-offset = 15.0
+offset = 10.0
 goals = {
     1: (0.0 + offset, 0.0 + offset),
     2: (0.0 + offset, 150.0 - offset),
@@ -219,7 +219,7 @@ try:
                     
                     #print(f"{[est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20)}")
                     #if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
-                    print(f"driving to_landmark{goal_id}")
+                    print(f"driving to_landmark {goal_id}")
                     distance, angle = pathing.move_towards_goal_step(est_pose, goal)
                     current_goal_idx +=1
                     just_moved_to_landmark = True
