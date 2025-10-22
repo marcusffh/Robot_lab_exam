@@ -286,7 +286,7 @@ try:
             # Draw map
             GUI.draw_world(est_pose, particles, world)
             cv2.imwrite(f"world{counter}.png", world)
-            grid_map.save_map(filename=f"grid{counter}.png")
+            #grid_map.save_map(filename=f"grid{counter}.png")
 
 finally: 
     # Make sure to clean up even if an exception occurred
