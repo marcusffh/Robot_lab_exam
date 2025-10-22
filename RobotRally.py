@@ -301,6 +301,7 @@ try:
 
                         # Add obstacle to grid
                         grid_map.add_landmark(objectIDs[i],x_obj, y_obj, landmark_radius)
+                        grid_map.save_map(filename=f"grid{counter}.png")
                     
             # Compute particle weights
             measurement_model(particles, objectIDs, dists, angles, sigma_d_obs, sigma_theta_obs)
@@ -320,7 +321,7 @@ try:
             # Draw map
             GUI.draw_world(est_pose, particles, world)
             cv2.imwrite(f"world{counter}.png", world)
-            #grid_map.save_map(filename=f"grid{counter}.png")
+            
 
 finally: 
     # Make sure to clean up even if an exception occurred
