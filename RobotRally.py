@@ -222,6 +222,7 @@ try:
         if current_goal_idx >= len(landmark_order):
             print("All goals reached!")
             break
+
         # Use motor controls to update particles
         if isRunningOnArlo():
             counter +=1
@@ -249,25 +250,25 @@ try:
                             current_goal_idx +=1
                     else:
                     #print(f"{[est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20)}")
-                    #if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
-                        print(f"driving to_landmark {goal_id}")
-                        distance, angle = pathing.move_towards_goal_step(est_pose, goal)
-                        just_moved_to_landmark = True
-                        explore_counter = explore_steps_after_landmark
-                        #else:
-                    #    rrt = robot_RRT(
-                    #        start=[est_pose.getX(), est_pose.getY()],
-                    #        goal=[goal[0], goal[1]],
-                    #        robot_model=robot,
-                    #        map=grid_map,   
-                    #        )
-                    #    current_goal_idx += 1
-                    #    path =rrt.planning()
-                    #    smooth_path = rrt.smooth_path(path)
-                    #    moves = arlo.follow_path(smooth_path)
-                    #    for dist, ang in moves:
-                    #        sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
-                
+                        if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
+                            print(f"driving to_landmark {goal_id}")
+                            distance, angle = pathing.move_towards_goal_step(est_pose, goal)
+                            just_moved_to_landmark = True
+                            explore_counter = explore_steps_after_landmark
+                        else:
+                            rrt = robot_RRT(
+                                start=[est_pose.getX(), est_pose.getY()],
+                                goal=[goal[0], goal[1]],
+                                robot_model=robot,
+                                map=grid_map,   
+                                )
+                            current_goal_idx += 1
+                            path =rrt.planning()
+                            smooth_path = rrt.smooth_path(path)
+                            moves = arlo.follow_path(smooth_path)
+                            for dist, ang in moves:
+                                sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
+                    
         sample_motion_model(particles, distance, angle, sigma_d, sigma_theta)
         particles = inject_random_particles(particles, ratio=0.05)
         # Fetch next frame
