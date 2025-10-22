@@ -28,9 +28,7 @@ landmarks = [
 
 driving_order = [1,2,3,4,1]
 landmark_manager = LandmarkManager(landmarks, driving_order)
-
-
-#obstacleIds_detcted = []
+obstacleIds_detcted = []
 
 GUI = SelflocalizeGUI(landmarks)
 
@@ -104,7 +102,7 @@ try:
 
     while True:
         timestep += 1
-        if landmark_manager.get_current_goal is None():
+        if landmark_manager.get_current_goal() is None():
             print("All goals reached!")
             break
 
@@ -136,7 +134,7 @@ try:
                 if object_detected:
                     state = "steer_away_from_object"
                 elif explore_counter <= 0:
-                    landmark_manager.advance_to_next_goal()
+                    landmark_manager.mark_goal_visited()
                     state = "navigate"
 
         elif state == "navigate":
