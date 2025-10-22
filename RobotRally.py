@@ -51,7 +51,7 @@ landmarks = {
     4: (200.0, 200.0) # Coordinates for landmark 4
 }
 
-offset = 10.0
+offset = 0.0
 goals = {
     1: (0.0 + offset, 0.0 + offset),
     2: (0.0 + offset, 200.0 - offset),

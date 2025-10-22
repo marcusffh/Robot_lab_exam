@@ -75,7 +75,7 @@ class LocalizationPathing:
 
         self.robot.turn_angle(np.degrees(angle_to_goal))
 
-        self.robot.drive_distance_cm(move_dist)
+        self.robot.drive_distance_cm(move_dist - 10)
         self.robot.stop()
         time.sleep(0.2)
 
