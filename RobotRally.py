@@ -239,7 +239,6 @@ try:
                         distance, angle = 0,0
                         current_goal_idx +=1
                 else:
-
                     #print(f"{[est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20)}")
                     #if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
                     print(f"driving to_landmark {goal_id}")
