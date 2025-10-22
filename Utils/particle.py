@@ -87,6 +87,18 @@ def add_uncertainty_von_mises(particles_list, sigma, theta_kappa):
 
 
 
+def initialize_particles(num_particles):
+    """ A simple function given to us to initialize a lot of particles
+    """
+    particles = []
+    for i in range(num_particles):
+        # Random starting points. 
+        p = Particle(520.0*np.random.ranf() - 120.0, 420.0*np.random.ranf() - 120.0, np.mod(2.0*np.pi*np.random.ranf(), 2.0*np.pi), 1.0/num_particles)
+        particles.append(p)
+
+    return particles
+
+
 #impiment motion model
 #Used for the prediction step
 
