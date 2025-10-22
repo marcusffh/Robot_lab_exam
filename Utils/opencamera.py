@@ -1,5 +1,5 @@
 import cv2
-from camera import Camera  # make sure Camera.py is in the same folder or in PYTHONPATH
+from Utils.camera import Camera  # make sure Camera.py is in the same folder or in PYTHONPATH
 import time
 
 def main():

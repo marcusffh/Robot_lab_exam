@@ -1,5 +1,5 @@
 # explore_landmarks.py
-from Utils.CalibratedRobot import CalibratedRobot
+from ..Utils.CalibratedRobot import CalibratedRobot
 import time
 import numpy as np
 
