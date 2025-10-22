@@ -39,11 +39,11 @@ class LocalizationPathing:
                 self.robot.turn_angle(-45)
                 angle_rad = np.radians(-45)
 
-            self.robot.drive_distance_cm(dist)
+            dist, obstacle_detected = self.robot.drive_distance_cm(dist)
 
-        return dist, angle_rad
+        return dist, angle_rad, obstacle_detected
     
-    def saw_landlanmark(self, landmarkID):
+    def saw_landmark(self, landmarkID):
         """
         Register that a landmark with a given ID has been seen.
         """
@@ -74,10 +74,34 @@ class LocalizationPathing:
 
         self.robot.turn_angle(np.degrees(angle_to_goal))
 
-        self.robot.drive_distance_cm(move_dist)
+        distance, obstacleDetected = self.robot.drive_distance_cm(move_dist)
         self.robot.stop()
         time.sleep(0.2)
 
-        return distance_to_goal, angle_to_goal
+        return distance, angle_to_goal, obstacleDetected
 
 
+def avoid_obstacle(self, turn_angle=45, stop_threshold=25):
+    """
+    Reads proximity sensors and performs a short avoidance maneuver toward
+    the side with more free space.
+    """
+    left, center, right = self.proximity_check()
+
+    # Determine which side is more open
+    if left > right:
+        print("Avoiding obstacle: turning left")
+        self.turn_angle(turn_angle)
+    else:
+        print("Avoiding obstacle: turning right")
+        self.turn_angle(-turn_angle)
+
+    # Optionally, check again after turning
+    left, center, right = self.proximity_check()
+
+    # If still too close, back up a bit
+    if min(left, center, right) < stop_threshold:
+        print("Still too close, backing up")
+        self.drive_distance_cm(10, direction=self.BACKWARD)
+
+    print("Obstacle avoidance complete.")

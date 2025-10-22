@@ -198,6 +198,8 @@ try:
     pre_exploring = True
     pre_explore_steps = 12
 
+    obstacle_detected = False
+
     #Initialize the robot
     if isRunningOnArlo():
         arlo = CalibratedRobot()
@@ -227,8 +229,11 @@ try:
         if isRunningOnArlo():
             counter +=1
             if counter > 1:
-                if pre_exploring:
-                    distance, angle = pathing.explore_step(False)
+                if obstacle_detected:
+                    pathing.avoid_obstacle()
+                    obstacle_detected = False
+                elif pre_exploring:
+                    distance, angle, obstacle_detected = pathing.explore_step(False)
                     pre_explore_steps -= 1
                     if pre_explore_steps <= 0:
                         pre_exploring = False
@@ -238,21 +243,21 @@ try:
                     if just_moved_to_landmark:
                         if explore_counter > 0:
                             if goal_id in Landmarks_seen_this_step:
-                                distance, angle = pathing.move_towards_goal_step(est_pose, goal)
+                                distance, angle, obstacle_detected = pathing.move_towards_goal_step(est_pose, goal)
                                 explore_counter = explore_steps_after_landmark
                             else:
-                                distance, angle = pathing.explore_step(False)
+                                distance, angle, obstacle_detected = pathing.explore_step(False)
                                 explore_counter -= 1
                                 print(f"Exploring after reached landmark, steps left: {explore_counter}")
                         else:
                             just_moved_to_landmark = False
-                            distance, angle = 0,0
+                            distance, angle, obstacle_detected = 0,0, False
                             current_goal_idx +=1
                     else:
                     #print(f"{[est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20)}")
                         if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
                             print(f"driving to_landmark {goal_id}")
-                            distance, angle = pathing.move_towards_goal_step(est_pose, goal)
+                            distance, angle, obstacle_detected = pathing.move_towards_goal_step(est_pose, goal)
                             just_moved_to_landmark = True
                             explore_counter = explore_steps_after_landmark
                         else:
@@ -268,9 +273,10 @@ try:
                             if path is not None:
                                 smooth_path = rrt.smooth_path(path)
                                 rrt.draw_graph(smooth_path)
-                                moves = arlo.follow_path(smooth_path)
-                                just_moved_to_landmark = True
-                                explore_steps_after_landmark = explore_counter
+                                moves, obstacle_detected = arlo.follow_path(smooth_path)
+                                if obstacle_detected:
+                                    just_moved_to_landmark = True
+                                    explore_steps_after_landmark = explore_counter
                                 for dist, ang in moves:
                                     sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
                             else:
@@ -291,7 +297,7 @@ try:
                 Landmarks_seen_this_step.append(objectIDs[i])
                 print("Object ID = ", objectIDs[i], ", Distance = ", dists[i], ", angle = ", angles[i])
                 if objectIDs[i] in landmarkIDs:
-                    pathing.saw_landlanmark(objectIDs[i])
+                    pathing.saw_landmark(objectIDs[i])
                 if objectIDs[i] > 4: 
                     if objectIDs[i] in obstacleIds_detcted:
                         grid_map.remove_landmark(objectIDs[i])
@@ -304,6 +310,7 @@ try:
                     # Convert to world coordinates
                     x_obj = x_r + dists[i] * np.cos(theta_r + angles[i])
                     y_obj = y_r + dists[i] * np.sin(theta_r + angles[i])
+                    print(f"{x_obj, y_obj}")
 
                     # Add obstacle to grid
                     grid_map.add_landmark(objectIDs[i],x_obj, y_obj, landmark_radius)

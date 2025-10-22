@@ -32,22 +32,47 @@ class CalibratedRobot:
         r = self.clamp_power(rightSpeed * self.CAL_KR) if rightSpeed > 0 else 0
         self.arlo.go_diff(l, r, leftDir, rightDir)
 
-    def drive_distance(self, meters, direction=None, speed=None,):
-        """Drive a certain amount of meters at a given speed."""
+    def drive_distance(self, meters, direction=None, speed=None, stop_threshold=25):
+        """Drive a certain distance in meters with proximity safety."""
         if speed is None:
             speed = self.default_speed
         if direction is None:
             direction = self.FORWARD
-        #The formula for the duration to drive the desired meters: duration = TRANSLATION_TIME * meters​ * (default speed /current speed​)
+
         duration = self.TRANSLATION_TIME * meters * (self.default_speed / speed)
+        start_time = time.time()
+        obstacle_detected = False
+
         self.drive(speed, speed, direction, direction)
-        time.sleep(duration)
+
+        while True:
+            left, center, right = self.proximity_check()
+            if min(left, center, right) < stop_threshold:
+                print("Obstacle detected, stopping.")
+                obstacle_detected = True
+                break
+
+            if time.time() - start_time >= duration:
+                break
+
+            time.sleep(0.05)
+
         self.arlo.stop()
 
+        # compute how far we actually drove
+        elapsed = time.time() - start_time
+        actual_meters = (elapsed / duration) * meters
+
+        return actual_meters, obstacle_detected
+
+
+
     def drive_distance_cm(self, distance_cm, direction=None, speed=None):
-        """Wrapper: convert cm to meters for the robot API"""
         distance_m = distance_cm / 100.0
-        self.drive_distance(distance_m, direction, speed)
+        actual_meters, obstacleDetected = self.drive_distance(distance_m, direction, speed)
+        actual_cm = actual_meters * 100.0
+        return actual_cm, obstacleDetected
+
 
     def turn_angle(self, angleDeg, speed=None):
         """Turn a given angle in degrees at a given speed. Positive = left, negative = right."""
@@ -74,6 +99,7 @@ class CalibratedRobot:
     def follow_path(self, path, start_orientation=np.array([0, 1])):
         moves = []
         orientation_unit = start_orientation / np.linalg.norm(start_orientation)
+        obstacleDetected = False
 
         for i in range(len(path) - 1):
             current_p = np.array(path[i])
@@ -98,11 +124,14 @@ class CalibratedRobot:
             print(f"distance: {distance:.2f}")
 
             self.turn_angle(math.degrees(angle))
-            self.drive_distance(distance)
+            distance, obstacleDetected = self.drive_distance_cm(distance)
+
+            if obstacleDetected: 
+                break
 
             moves.append((distance, angle))
             
-        return moves
+        return moves, obstacleDetected
             
     def stop(self):
         self.arlo.stop()
