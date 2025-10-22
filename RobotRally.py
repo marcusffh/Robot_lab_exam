@@ -230,6 +230,7 @@ try:
                         print(f"Exploring after reached landmark, steps left: {explore_counter}")
                     else:
                         just_moved_to_landmark = False
+                        distance, angle = 0,0
                 else:
                     goal_id = landmark_order[current_goal_idx]  
                     goal = goals[goal_id]
