@@ -109,21 +109,7 @@ def sample_motion_model(particles_list, distance, angle, sigma_d, sigma_theta):
         add_uncertainty(particles_list, sigma_d, sigma_theta)
 
 
-from scipy.stats import norm
-import numpy as np
-
 def measurement_model(particle_list, ObjectIDs, landmark_manager, sigma_d, sigma_theta, dists, angles):
-    """
-    Updates particle weights based on observations.
-
-    particle_list : list of Particle objects
-    ObjectIDs : list of observed landmark IDs
-    landmark_manager : LandmarkManager object
-    dists : list of distances to observed landmarks
-    angles : list of angles to observed landmarks
-    sigma_d : std deviation for distance
-    sigma_theta : std deviation for angle
-    """
     for particle in particle_list:
         x_i = particle.getX()
         y_i = particle.getY()
