@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
 import sys
-import matplotlib.cm as cm
-
 class SelflocalizeGUI(object):
     def __init__(self, landmarkIDs, landmark_colors, landmarks):
         self.landmarkIDs = landmarkIDs
@@ -12,9 +10,10 @@ class SelflocalizeGUI(object):
         self.CWHITE = (255, 255, 255)
 
     def jet(self, x):
-        c = cm.jet(x)  # returns RGBA in [0,1]
-        return (int(c[2]*255), int(c[1]*255), int(c[0]*255))  # convert to BGR for OpenCV
-
+        r = (x >= 3.0/8.0 and x < 5.0/8.0) * (4.0 * x - 3.0/2.0) + (x >= 5.0/8.0 and x < 7.0/8.0) + (x >= 7.0/8.0) * (-4.0 * x + 9.0/2.0)
+        g = (x >= 1.0/8.0 and x < 3.0/8.0) * (4.0 * x - 1.0/2.0) + (x >= 3.0/8.0 and x < 5.0/8.0) + (x >= 5.0/8.0 and x < 7.0/8.0) * (-4.0 * x + 7.0/2.0)
+        b = (x < 1.0/8.0) * (4.0 * x + 1.0/2.0) + (x >= 1.0/8.0 and x < 3.0/8.0) + (x >= 3.0/8.0 and x < 5.0/8.0) * (-4.0 * x + 5.0/2.0)
+        return (255.0*r, 255.0*g, 255.0*b)
 
     def draw_world(self, est_pose, particles, world):
         offsetX = 100
