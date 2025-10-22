@@ -58,7 +58,6 @@ class LocalizationPathing:
         Returns True if at least `min_landmarks_seen` have been observed.
         """
         return self.min_landmarks_met
-    
 
     
     def move_towards_goal_step(self, est_pose, goal):

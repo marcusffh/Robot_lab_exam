@@ -131,7 +131,6 @@ def inject_random_particles(particle_list, ratio=0.01):
         )
     return particle_list
 
-
 def resample_particles(particle_list):
     weights = np.array([p.getWeight() for p in particle_list])
     total_weight = np.sum(weights)
@@ -152,7 +151,6 @@ def resample_particles(particle_list):
         resampled.append(p_resampled)
 
     return resampled
-
 
 def filter_landmarks_by_distance(objectIDs, dists, angles):
     """
@@ -195,6 +193,7 @@ try:
     just_moved_to_landmark = True
     explore_steps_after_landmark = 12
     explore_counter = explore_steps_after_landmark
+    Landmarks_seen_this_step = []
 
     #Initialize the robot
     if isRunningOnArlo():
@@ -223,24 +222,28 @@ try:
         # Use motor controls to update particles
         if isRunningOnArlo():
             counter +=1
+            goal_id = landmark_order[current_goal_idx]  
+            goal = goals[goal_id]
             if counter > 1:
                 if just_moved_to_landmark:
                     if explore_counter > 0:
-                        distance, angle = pathing.explore_step(False)
-                        explore_counter -= 1
-                        print(f"Exploring after reached landmark, steps left: {explore_counter}")
+                        if goal_id in Landmarks_seen_this_step:
+                             distance, angle = pathing.move_towards_goal_step(est_pose, goal)
+                             explore_counter = explore_steps_after_landmark
+                        else:
+                            distance, angle = pathing.explore_step(False)
+                            explore_counter -= 1
+                            print(f"Exploring after reached landmark, steps left: {explore_counter}")
                     else:
                         just_moved_to_landmark = False
                         distance, angle = 0,0
+                        current_goal_idx +=1
                 else:
-                    goal_id = landmark_order[current_goal_idx]  
-                    goal = goals[goal_id]
-                    
+
                     #print(f"{[est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20)}")
                     #if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal[0], goal[1]], r_robot=20):
                     print(f"driving to_landmark {goal_id}")
                     distance, angle = pathing.move_towards_goal_step(est_pose, goal)
-                    current_goal_idx +=1
                     just_moved_to_landmark = True
                     explore_counter = explore_steps_after_landmark
                     #else:
@@ -261,13 +264,14 @@ try:
         particles = inject_random_particles(particles, ratio=0.05)
         # Fetch next frame
         colour = cam.get_next_frame()
-        
+        Landmarks_seen_this_step.clear()
         # Detect objects
         objectIDs, dists, angles = cam.detect_aruco_objects(colour)
         if not isinstance(objectIDs, type(None)):
             objectIDs, dists, angles = filter_landmarks_by_distance(objectIDs, dists, angles)
             # List detected objects
             for i in range(len(objectIDs)):
+                Landmarks_seen_this_step.append(objectIDs[i])
                 print("Object ID = ", objectIDs[i], ", Distance = ", dists[i], ", angle = ", angles[i])
                 if objectIDs[i] in landmarkIDs:
                     pathing.saw_landlanmark(objectIDs[i])
