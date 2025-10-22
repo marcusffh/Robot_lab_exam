@@ -21,9 +21,6 @@ class LocalizationPathing:
         angle_deg = self.rotation_deg 
         angle_rad = np.radians(angle_deg)
 
-        if self.min_landmarks_met:
-            return 0, 0 
-
         if not drive:
             self.robot.turn_angle(angle_deg)
             angle_rad = np.radians(self.rotation_deg)
