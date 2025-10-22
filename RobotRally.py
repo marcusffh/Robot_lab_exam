@@ -259,10 +259,11 @@ try:
                             print("RRT")
                             rrt = robot_RRT(
                                 start=[est_pose.getX(), est_pose.getY()],
-                                goal=[goal[0] - 10, goal[1] - 10],
+                                goal=[goal[0], goal[1]],
                                 robot_model=robot,
                                 map=grid_map,   
                                 )
+                            print(f"{est_pose.getX(), est_pose.getY(), goal[0], goal[1]}")
                             path =rrt.planning()
                             if path is not None:
                                 smooth_path = rrt.smooth_path(path)
