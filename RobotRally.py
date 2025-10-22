@@ -264,7 +264,7 @@ try:
                                 map=grid_map,   
                                 )
                             path =rrt.planning()
-                            if smooth_path is not None:
+                            if path is not None:
                                 smooth_path = rrt.smooth_path(path)
                                 rrt.draw_graph(smooth_path)
                                 moves = arlo.follow_path(smooth_path)
