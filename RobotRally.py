@@ -119,19 +119,44 @@ def measurement_model(particle_list, ObjectIDs, dists, angles, sigma_d, sigma_th
 
         particle.setWeight(p_observation_given_x)
 
+
 def resample_particles(particle_list):
     weights = np.array([p.getWeight() for p in particle_list])
-    weights /= np.sum(weights)
+    total_weight = np.sum(weights)
+
+    # Avoid divide-by-zero
+    if total_weight == 0 or np.isnan(total_weight):
+        weights = np.ones(len(particle_list)) / len(particle_list)
+    else:
+        weights /= total_weight
+
     cdf = np.cumsum(weights)
     resampled = []
 
     for _ in range(len(particle_list)):
         z = np.random.rand()
         idx = np.searchsorted(cdf, z)
-        p_resampled = particle.Particle(particle_list[idx].getX(), particle_list[idx].getY(), particle_list[idx].getTheta(), 1.0/(len(particle_list)))
+        p_resampled = particle.Particle(
+            particle_list[idx].getX(),
+            particle_list[idx].getY(),
+            particle_list[idx].getTheta(),
+            1.0 / len(particle_list)
+        )
         resampled.append(p_resampled)
-            
+
+    rejuvenation_ratio = 0.05  # 5% random new particles
+    n_random = int(len(particle_list) * rejuvenation_ratio)
+
+    for i in range(n_random):
+        resampled[i] = particle.Particle(
+            520.0 * np.random.ranf() - 120.0,
+            420.0 * np.random.ranf() - 120.0,
+            np.mod(2.0 * np.pi * np.random.ranf(), 2.0 * np.pi),
+            1.0 / len(particle_list)
+        )
+
     return resampled
+
 
 def filter_landmarks_by_distance(objectIDs, dists, angles):
     """
