@@ -264,6 +264,7 @@ try:
                                 )
                             path =rrt.planning()
                             smooth_path = rrt.smooth_path(path)
+                            rrt.draw_graph(smooth_path)
                             moves = arlo.follow_path(smooth_path)
                             just_moved_to_landmark = True
                             explore_steps_after_landmark = explore_counter
@@ -288,20 +289,20 @@ try:
                 if objectIDs[i] > 4: 
                     if objectIDs[i] in obstacleIds_detcted:
                         grid_map.remove_landmark(objectIDs[i])
-                        obstacleIds_detcted.append(objectIDs[i])
-                        print("addded obstacle to grid")
-                        x_r = est_pose.getX()
-                        y_r = est_pose.getY()
-                        theta_r = est_pose.getTheta()
+                    obstacleIds_detcted.append(objectIDs[i])
+                    print("addded obstacle to grid")
+                    x_r = est_pose.getX()
+                    y_r = est_pose.getY()
+                    theta_r = est_pose.getTheta()
 
-                        # Convert to world coordinates
-                        x_obj = x_r + dists[i] * np.cos(theta_r + angles[i])
-                        y_obj = y_r + dists[i] * np.sin(theta_r + angles[i])
+                    # Convert to world coordinates
+                    x_obj = x_r + dists[i] * np.cos(theta_r + angles[i])
+                    y_obj = y_r + dists[i] * np.sin(theta_r + angles[i])
 
-                        # Add obstacle to grid
-                        grid_map.add_landmark(objectIDs[i],x_obj, y_obj, landmark_radius)
-                        grid_map.save_map(filename=f"grid{counter}.png")
-                    
+                    # Add obstacle to grid
+                    grid_map.add_landmark(objectIDs[i],x_obj, y_obj, landmark_radius)
+                    grid_map.save_map(filename=f"grid{counter}.png")
+                
             # Compute particle weights
             measurement_model(particles, objectIDs, dists, angles, sigma_d_obs, sigma_theta_obs)
             # Resampling
