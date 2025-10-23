@@ -61,12 +61,8 @@ class LandmarkOccupancyGrid:
         for dx in range(-cell_radius, cell_radius + 1):
             for dy in range(-cell_radius, cell_radius + 1):
                 ni, nj = center_idx[0] + dx, center_idx[1] + dy
-                if 0 <= ni < self.n_grids[0] and 0 <= nj < self.n_grids[1]:
-                    if self.grid[ni, nj] == 1:
-                        return True
-                else:
+                if self.in_collision([ni, nj]):
                     return True
-
         return False
 
 
