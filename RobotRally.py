@@ -14,7 +14,7 @@ import cv2
 from Utils.LandmarkOccupancyGrid import LandmarkOccupancyGrid
 from Utils.LandmarkUtils import LandmarkUtils
 from Utils.robot_model import RobotModel
-from Utils.robot_RRT import robot_RRT
+from Utils.AStar import AStar
 from localization.selflocalizeGUI import SelflocalizeGUI
 from Utils.Robot import Robot
 from Utils.Landmark import Landmark, LandmarkManager
@@ -151,18 +151,17 @@ try:
                     state = "explore"
             else:
                 distance, angle = 0, 0
-                print("Path blocked by obstacle, using RRT")
-                rrt = robot_RRT(
+                print("Path blocked by obstacle, using AStar")
+                a_Star = AStar(
+                    map=grid_map, 
+                    r_model=robot,
                     start=[est_pose.getX(), est_pose.getY()],
                     goal=[goal_position[0], goal_position[1]],
-                    robot_model=robot,
-                    map=grid_map,
+                    initial_heading=est_pose.getTheta()
                 )
-                path = rrt.planning()
+                path = a_Star.planning()
                 if path is not None:
-                    smooth_path = rrt.smooth_path(path)
-                    rrt.draw_graph(smooth_path)
-                    moves, object_detected = arlo.follow_path(smooth_path)
+                    moves, object_detected = arlo.follow_path(path)
 
                     for dist, ang in moves:
                         particle.sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)

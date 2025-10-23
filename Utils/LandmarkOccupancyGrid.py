@@ -28,6 +28,14 @@ class LandmarkOccupancyGrid:
             valid = False
 
         return [i, j], valid
+    
+    def grid_to_world(self, idx):
+        """
+        Convert grid index [i, j] to world coordinates (x, y).
+        """
+        x = self.map.map_area[0][0] + (idx[0] + 0.5) * self.map.resolution
+        y = self.map.map_area[0][1] + (idx[1] + 0.5) * self.map.resolution
+        return [x, y]
 
 
     def in_collision(self, indices):
@@ -40,31 +48,28 @@ class LandmarkOccupancyGrid:
         
         return self.grid[indices[0], indices[1]] 
     
-    def robot_collision(self, camera_pos, r_robot, heading = 0):
-        """
-        Checks if a robot with radius r_robot at position (x, y) collides with an obstacle
-        """
-        if heading is not None:
-            center_pos = [
-                camera_pos[0] - r_robot * np.cos(heading),
-                camera_pos[1] - r_robot * np.sin(heading)
-            ]
-        else:
-            center_pos = [camera_pos[0], camera_pos[1] - r_robot]
+    def robot_collision_grid(self, node_idx, r_robot, heading):
+        # Shift the robot center backward along heading by r_robot in grid units
+        shift_cells = int(np.ceil(r_robot / self.resolution))
+        center_idx = (
+            node_idx[0] - int(shift_cells * np.cos(heading)),
+            node_idx[1] - int(shift_cells * np.sin(heading))
+        )
 
-        indices = [
-            int((center_pos[0] - self.map_area[0][0]) // self.resolution),
-            int((center_pos[1] - self.map_area[0][1]) // self.resolution)
-        ]
-
-        cell_radius = int(np.ceil(r_robot / self.resolution))
+        cell_radius = shift_cells
 
         for dx in range(-cell_radius, cell_radius + 1):
             for dy in range(-cell_radius, cell_radius + 1):
-                neighbor_indices = [indices[0] + dx, indices[1] + dy]
-                if self.in_collision(neighbor_indices):
-                    return 1
-        return 0
+                ni, nj = center_idx[0] + dx, center_idx[1] + dy
+                if 0 <= ni < self.n_grids[0] and 0 <= nj < self.n_grids[1]:
+                    if self.grid[ni, nj] == 1:
+                        return True
+                else:
+                    return True
+
+        return False
+
+
     
     def is_path_clear(self, start, goal, r_robot, step=5):
         """
@@ -126,5 +131,3 @@ class LandmarkOccupancyGrid:
         plt.savefig(filename)
         plt.close()
         print(f"Map saved as {filename}")
-
-
