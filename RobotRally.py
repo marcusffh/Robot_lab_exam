@@ -149,7 +149,7 @@ try:
                     est_pose = particle.estimate_pose(particles)
                     print("reinitialise")
                     explore_counter = explore_steps
-                    state = "explore"
+                    state = "pre_explore"
                 if object_detected:
                     state = "steer_away_from_object"
                 else:
