@@ -85,7 +85,7 @@ class LocalizationPathing:
 
 
     def steer_away_from_object(self, turn_angle=5, distance = 20, stop_threshold=20,):
-        left, center, right = self.proximity_check()
+        left, center, right = self.robot.proximity_check()
         angle_turned = 0
 
         # If any sensor is below threshold, decide which way to turn
@@ -97,7 +97,7 @@ class LocalizationPathing:
                 self.turn_angle(-turn_angle)  # turn right
                 angle_turned -= np.radians(turn_angle)
 
-            left, center, right = self.proximity_check()
+            left, center, right = self.robot.proximity_check()
 
         self.robot.drive_distance_cm(distance)
 
