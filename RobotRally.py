@@ -187,7 +187,7 @@ try:
             for i in range(len(objectIDs)):
                 print("Object ID = ", objectIDs[i], ", Distance = ", dists[i], ", angle = ", angles[i])
                 if objectIDs[i] in landmark_manager.get_all_ids():
-                    landmark_manager.add_landmarks_seen_last_timestep(objectIDs[i])
+                    landmark_manager.add_landmarks_seen_last_timestep([objectIDs[i]])
                 if objectIDs[i] > 4: 
                     if objectIDs[i] in obstacleIds_detcted:
                         grid_map.remove_landmark(objectIDs[i])
