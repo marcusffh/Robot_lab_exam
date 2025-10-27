@@ -137,18 +137,43 @@ class LocalizationPathing:
 
         return distance, angle_turned
     
-    def sees_landmark(self, landmarkId, fov = np.deg2rad(40)):
+    def sees_landmark(self, landmarkId, est_pose, goal, fov = np.deg2rad(40)):
         """
         Check if a landmark is seen roughly in front of the robot.
         fov: field of view in radians (half-angle to each side)
         """
+        robot_pos = np.array([est_pose.getX(), est_pose.getY()])
+        direction = goal - robot_pos
+        distance_to_goal = np.linalg.norm(direction)
+
         colour = self.camera.get_next_frame()
         objectIDs, dists, angles = self.camera.detect_aruco_objects(colour)
         
         if objectIDs is not None and angles is not None:
-            for id, angle in zip(objectIDs, angles):
-                if id == landmarkId and -fov <= angle <= fov:
+            for id, angle in zip(objectIDs, dists,  angles):
+                if (id == landmarkId and -fov <= angle <= fov) and distance_to_goal:
                     return True
         return False
+    
+    def sees_landmark(self, landmarkId, est_pose, goal, fov=np.deg2rad(40), distance_tolerance=40):
+        """
+        Check if a landmark is seen roughly in front of the robot and at roughly the correct distance.
+        fov: field of view in radians (half-angle to each side)
+        distance_tolerance: allowed deviation in distance (same units as robot/world coordinates)
+        """
+        robot_pos = np.array([est_pose.getX(), est_pose.getY()])
+        goal = np.array(goal)
+        distance_to_goal = np.linalg.norm(goal - robot_pos)
+
+        colour = self.camera.get_next_frame()
+        objectIDs, dists, angles = self.camera.detect_aruco_objects(colour)
+        
+        if objectIDs is not None and angles is not None:
+            for id, d, angle in zip(objectIDs, dists, angles):
+                if id == landmarkId and -fov <= angle <= fov:
+                    if abs(d - distance_to_goal) <= distance_tolerance:
+                        return True
+        return False
+
 
 

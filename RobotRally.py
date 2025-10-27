@@ -142,7 +142,7 @@ try:
             if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal_position[0], goal_position[1]], r_robot=20):
                 print(f"est_pose: {est_pose.getX(), est_pose.getY(), est_pose.getTheta()}")
                 angle = pathing.look_towards_goal(est_pose, goal_position)
-                if pathing.sees_landmark(landmark_manager.get_current_goal().id):
+                if pathing.sees_landmark(landmark_manager.get_current_goal().id, est_pose, goal_position):
                     distance, object_detected = pathing.drive_towards_goal_step(est_pose, goal_position)
                     landmark_manager.mark_goal_visited()
                 else:
