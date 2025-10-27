@@ -136,7 +136,7 @@ try:
 
         elif state == "navigate":
             goal_position = landmark_manager.get_current_goal_position()
-            print(f"Navigating to goal {landmark_manager.get_current_goal_id()}")
+            print(f"Navigating to goal {landmark_manager.get_current_goal().id}")
 
             # Check if direct path is clear
             if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal_position[0], goal_position[1]], r_robot=20):
