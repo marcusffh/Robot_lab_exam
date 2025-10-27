@@ -134,7 +134,6 @@ try:
                 if object_detected:
                     state = "steer_away_from_object"
                 elif explore_counter <= 0:
-
                     state = "navigate"
 
         elif state == "navigate":
@@ -148,6 +147,7 @@ try:
                 else:
                     particles = particle.initialize_particles(num_particles)
                     est_pose = particle.estimate_pose(particles)
+                    explore_counter = explore_steps
                     state = "explore"
                 if object_detected:
                     state = "steer_away_from_object"
