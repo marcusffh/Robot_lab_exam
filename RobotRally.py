@@ -103,6 +103,9 @@ try:
             print("All goals reached!")
             break
 
+        goal_position = landmark_manager.get_current_goal_position()
+        print(f"Navigating to goal {landmark_manager.get_current_goal()}")
+
         #Driving logic defined by the state
         if state == "pre_explore":
             print("Pre exploring")
@@ -131,19 +134,16 @@ try:
                 if object_detected:
                     state = "steer_away_from_object"
                 elif explore_counter <= 0:
-                    landmark_manager.mark_goal_visited()
                     state = "navigate"
 
         elif state == "navigate":
-            goal_position = landmark_manager.get_current_goal_position()
-            print(f"Navigating to goal {landmark_manager.get_current_goal()}")
-
             # Check if direct path is clear
             if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal_position[0], goal_position[1]], r_robot=20):
-                print(f"est_pose: {est_pose}")
+                print(f"est_pose: {est_pose.getX(), est_pose.getY(), est_pose.getTheta()}")
                 angle = pathing.look_towards_goal(est_pose, goal_position)
                 if pathing.sees_landmark(landmark_manager.get_current_goal().id):
                     distance, object_detected = pathing.drive_towards_goal_step(est_pose, goal_position)
+                    landmark_manager.mark_goal_visited()
                 else:
                     particles = particle.initialize_particles(num_particles)
                     est_pose = particle.estimate_pose(particles)
@@ -211,7 +211,7 @@ try:
                 p.setWeight(1.0/num_particles)
     
         est_pose = particle.estimate_pose(particles) # The estimate of the robots current pose
-        #particles = particle.inject_random_particles(particles, ratio=0.005)
+        particles = particle.inject_random_particles(particles, ratio=0.1)
 
         # Draw map
         GUI.draw_world(est_pose, particles, world)
