@@ -134,6 +134,7 @@ try:
                 if object_detected:
                     state = "steer_away_from_object"
                 elif explore_counter <= 0:
+
                     state = "navigate"
 
         elif state == "navigate":
