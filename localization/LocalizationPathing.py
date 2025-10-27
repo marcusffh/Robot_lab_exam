@@ -53,6 +53,7 @@ class LocalizationPathing:
             self.observed_landmarks.add(landmarkID)
 
             if len(self.observed_landmarks) >= self.min_landmarks_to_see:
+                print("seen enough")
                 self.min_landmarks_met = True
 
     def seen_enough_landmarks(self):
