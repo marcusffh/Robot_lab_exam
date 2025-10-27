@@ -129,7 +129,7 @@ def measurement_model(particle_list, ObjectIDs, landmark_manager,dists, angles, 
 
                 e_l = np.array([l_x - x_i, l_y - y_i]) / d_i
 
-                dot = np.clip(np.dot(e_l, e_theta), -1.0, 1.0)
+                dot = np.dot(e_l, e_theta)
                 phi_i = np.sign(np.dot(e_l, e_theta_hat)) * np.arccos(dot)
                 
                 p_phi_m = norm.pdf(angle, loc=phi_i, scale=sigma_theta)
@@ -168,7 +168,7 @@ def resample_particles(particle_list):
             particle_list[idx].getX(),
             particle_list[idx].getY(),
             particle_list[idx].getTheta(),
-            1.0 / len(particle_list)
+            particle_list[idx].getWeight()
         )
         resampled.append(p_resampled)
 
