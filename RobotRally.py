@@ -48,13 +48,10 @@ def filter_objects_by_distance(objectIDs, dists, angles):
 
     return filtered_ids, filtered_dists, filtered_angles
 
-def add_obstacle_to_grid(grid_map, obstacle_manager, obstacle_id, est_pose, dist, angle, landmark_radius, timestep):
+def add_obstacle_to_grid(grid_map, obstacle_id, est_pose, dist, angle, landmark_radius, timestep):
     # Convert to world coordinates
     x_obj = est_pose.getX() + dist * np.cos(est_pose.getTheta() + angle)
     y_obj = est_pose.getY() + dist * np.sin(est_pose.getTheta() + angle)
-    
-    # Add obstacle to ObstacleManager
-    obstacle_manager.add_obstacle(obstacle_id, x_obj, y_obj, landmark_radius)
     
     # Add obstacle to grid and save
     grid_map.add_landmark(obstacle_id, x_obj, y_obj, landmark_radius)
@@ -192,7 +189,7 @@ try:
                     if objectIDs[i] in obstacleIds_detcted:
                         grid_map.remove_landmark(objectIDs[i])
                     obstacleIds_detcted.append(objectIDs[i])
-                    add_obstacle_to_grid(objectIDs)
+                    add_obstacle_to_grid(grid_map, objectIDs[i],est_pose, dists[i], angles[i], 20, timestep )
                 
             # Compute particle weights
             particle.measurement_model(particles, objectIDs, landmark_manager, dists, angles, sigma_d_obs, sigma_theta_obs)
