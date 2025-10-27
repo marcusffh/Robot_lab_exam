@@ -5,6 +5,6 @@ from Utils.CalibratedRobot import CalibratedRobot  # adjust the import to match 
 arlo = CalibratedRobot()
 
 # Turn 90 degrees left
-arlo.turn_angle(360)
+arlo.turn_angle(-90)
 
 arlo.stop()
