@@ -138,8 +138,8 @@ class LocalizationPathing:
         return distance, angle_turned
 
     def sees_landmark(self, landmarkId):
-        frame = self.camera.get_next_frame()
-        objectIDs, dists, angles = self.camera.detect_aruco_objects(frame)
+        colour = self.camera.get_next_frame()
+        objectIDs, dists, angles = self.camera.detect_aruco_objects(colour)
         if objectIDs is not None:
             for id in objectIDs:
                 if id == landmarkId:
