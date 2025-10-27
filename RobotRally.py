@@ -147,6 +147,7 @@ try:
                 else:
                     particles = particle.initialize_particles(num_particles)
                     est_pose = particle.estimate_pose(particles)
+                    print("reinitialise")
                     explore_counter = explore_steps
                     state = "explore"
                 if object_detected:

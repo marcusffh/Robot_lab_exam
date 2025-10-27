@@ -137,7 +137,7 @@ class LocalizationPathing:
 
         return distance, angle_turned
     
-    def sees_landmark(self, landmarkId, est_pose, goal, fov=np.pi/6, distance_tolerance=50):
+    def sees_landmark(self, landmarkId, est_pose, goal, fov=np.pi/6, distance_tolerance=40):
         """
         Check if a landmark is seen roughly in front of the robot and at roughly the correct distance.
         fov: field of view in radians (half-angle to each side)
@@ -152,6 +152,7 @@ class LocalizationPathing:
         
         if objectIDs is not None and angles is not None:
             for id, d, angle in zip(objectIDs, dists, angles):
+                print(f"{distance_to_goal, d}")
                 if id == landmarkId and -fov <= angle <= fov:
                     if abs(d - distance_to_goal) <= distance_tolerance:
                         return True
