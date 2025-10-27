@@ -47,7 +47,7 @@ class SelflocalizeGUI:
         # Draw landmarks
         for lm in self.landmarks:
             lm_screen = (int(lm.x + offsetX), ymax - int(lm.y + offsetY))
-            cv2.circle(world, lm_screen, int(2), self.landmark_colors[lm.id], -1)
+            cv2.circle(world, lm_screen, int(5), self.landmark_colors[lm.id], -1)
 
         # Draw estimated robot pose
         a = (int(est_pose.getX()) + offsetX, ymax - (int(est_pose.getY()) + offsetY))
