@@ -104,7 +104,7 @@ try:
             break
 
         goal_position = landmark_manager.get_current_goal_position()
-        print(f"Navigating to goal {landmark_manager.get_current_goal()}")
+        print(f"Navigating to goal {landmark_manager.get_current_goal().id}")
 
         #Driving logic defined by the state
         if state == "pre_explore":

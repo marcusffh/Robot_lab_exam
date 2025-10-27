@@ -136,13 +136,19 @@ class LocalizationPathing:
         self.robot.drive_distance_cm(distance)
 
         return distance, angle_turned
-
-    def sees_landmark(self, landmarkId):
+    
+    def sees_landmark(self, landmarkId, fov=np.pi/6):
+        """
+        Check if a landmark is seen roughly in front of the robot.
+        fov: field of view in radians (half-angle to each side)
+        """
         colour = self.camera.get_next_frame()
         objectIDs, dists, angles = self.camera.detect_aruco_objects(colour)
-        if objectIDs is not None:
-            for id in objectIDs:
-                if id == landmarkId:
+        
+        if objectIDs is not None and angles is not None:
+            for id, angle in zip(objectIDs, angles):
+                if id == landmarkId and -fov <= angle <= fov:
                     return True
         return False
+
 
