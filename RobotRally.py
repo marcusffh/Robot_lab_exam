@@ -78,7 +78,6 @@ try:
     timestep = 0
 
     explore_steps = 16
-    pre_explore_steps = 12
     explore_counter = explore_steps
     object_detected = False
     state = "explore"
@@ -107,14 +106,7 @@ try:
         print(f"Navigating to goal {landmark_manager.get_current_goal().id}")
 
         #Driving logic defined by the state
-        if state == "steer_away_from_object":
-            print("steer_away_from_object")
-            distance, angle = pathing.steer_away_from_object()
-            object_detected = False
-            explore_counter = explore_steps
-            state = "explore"
-
-        elif state == "explore":
+        if state == "explore":
             if explore_counter > 0:
                 if landmark_manager.current_goal_seen_last_timestep() and pathing.seen_enough_landmarks():
                     state = "navigate"
@@ -128,6 +120,13 @@ try:
                 elif explore_counter <= 0:
                     state = "navigate"
 
+        elif state == "steer_away_from_object":
+            print("steer_away_from_object")
+            distance, angle = pathing.steer_away_from_object()
+            object_detected = False
+            explore_counter = explore_steps
+            state = "explore"
+
         elif state == "navigate":
             # Check if direct path is clear
             if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal_position[0], goal_position[1]], r_robot=20):
@@ -140,6 +139,7 @@ try:
                     particles = particle.inject_random_particles(particles, ratio=0.3)
                     print("reinitialise")
                     pathing.observed_landmarks.clear()
+                    pathing.min_landmarks_met = False
                     explore_counter = explore_steps
                     state = "explore"
                 if object_detected:
