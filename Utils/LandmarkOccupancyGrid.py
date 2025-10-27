@@ -48,7 +48,7 @@ class LandmarkOccupancyGrid:
         
         return self.grid[indices[0], indices[1]] 
     
-    def robot_collision_grid(self, node_idx, r_robot, heading):
+    def robot_collision(self, node_idx, r_robot, heading):
         # Shift the robot center backward along heading by r_robot in grid units
         shift_cells = int(np.ceil(r_robot / self.resolution))
         center_idx = (

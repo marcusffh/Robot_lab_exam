@@ -78,7 +78,7 @@ class AStar:
                 else:
                     heading = self.robot_model.compute_heading(idx, neighbor)
 
-                if not self.map.robot_collision_grid(neighbor, self.r_robot, heading):
+                if not self.map.robot_collision(neighbor, self.r_robot, heading):
                     neighbors.append(neighbor)
         return neighbors
 
