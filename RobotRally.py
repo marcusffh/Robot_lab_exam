@@ -107,24 +107,20 @@ try:
 
         #Driving logic defined by the state
         if state == "explore":
-            if explore_counter > 0:
-                if landmark_manager.current_goal_seen_last_timestep() and pathing.seen_enough_landmarks():
-                    state = "navigate"
-                else:
-                    distance, angle, object_detected = pathing.explore_step(False)
-                    explore_counter -= 1
-                    print(f"Exploring after landmark, steps left: {explore_counter}")
+            print("Exploring")
+            if landmark_manager.current_goal_seen_last_timestep() and pathing.seen_enough_landmarks():
+                state = "navigate"
+            else:
+                distance, angle, object_detected = pathing.explore_step(False)
+                print(f"Exploring after landmark, steps left: {explore_counter}")
 
-                if object_detected:
-                    state = "steer_away_from_object"
-                elif explore_counter <= 0:
-                    state = "navigate"
+            if object_detected:
+                state = "steer_away_from_object"
 
         elif state == "steer_away_from_object":
             print("steer_away_from_object")
             distance, angle = pathing.steer_away_from_object()
             object_detected = False
-            explore_counter = explore_steps
             state = "explore"
 
         elif state == "navigate":
@@ -140,12 +136,10 @@ try:
                     print("reinitialise")
                     pathing.observed_landmarks.clear()
                     pathing.min_landmarks_met = False
-                    explore_counter = explore_steps
                     state = "explore"
                 if object_detected:
                     state = "steer_away_from_object"
                 else:
-                    explore_counter = explore_steps
                     state = "explore"
             else:
                 distance, angle = 0, 0
