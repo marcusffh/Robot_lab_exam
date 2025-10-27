@@ -91,10 +91,10 @@ class LocalizationPathing:
         # If any sensor is below threshold, decide which way to turn
         while left < stop_threshold or center < stop_threshold or right < stop_threshold:
             if left > right:
-                self.turn_angle(turn_angle)  # turn left
+                self.robot.turn_angle(turn_angle)  # turn left
                 angle_turned += np.radians(turn_angle)
             else:
-                self.turn_angle(-turn_angle)  # turn right
+                self.robot.turn_angle(-turn_angle)  # turn right
                 angle_turned -= np.radians(turn_angle)
 
             left, center, right = self.robot.proximity_check()
