@@ -102,7 +102,7 @@ try:
 
     while True:
         timestep += 1
-        if landmark_manager.get_current_goal() is None():
+        if landmark_manager.get_current_goal() is None:
             print("All goals reached!")
             break
 

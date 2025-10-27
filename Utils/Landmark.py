@@ -39,9 +39,10 @@ class LandmarkManager:
             return (current_goal.x, current_goal.y)
         return None
 
-    def mark_goal_visited(self, lm_id):
-        if lm_id in self.landmarks:
-            self.landmarks[lm_id].mark_visited()
+    def mark_goal_visited(self):
+        current_goal = self.get_current_goal()
+        if current_goal is not None:
+            current_goal.mark_visited()
 
     def add_landmarks_seen_last_timestep(self, landmarkIDs):
         self.landmarks_seen_last_timestep.update(landmarkIDs)

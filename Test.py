@@ -9,7 +9,7 @@ from Utils.CalibratedRobot import CalibratedRobot
 from Utils.LandmarkOccupancyGrid import LandmarkOccupancyGrid
 from Utils.LandmarkUtils import LandmarkUtils
 from Utils.robot_model import RobotModel
-from Utils.robot_RRT import robot_RRT
+from Utils.AStar import robot_RRT
 from Utils.particle import Particle # particles and particle filter
 from Utils.marker import MarkerTracker # markers and  keeping track of the
 
