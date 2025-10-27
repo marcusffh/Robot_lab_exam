@@ -22,16 +22,16 @@ class LandmarkManager:
         self.landmarks = {lm.id: lm for lm in landmarks}
         self.driving_order = driving_order
         self.landmarks_seen_last_timestep = set()
+        self.current_index = 0
     
     def get_all_ids(self):
         return list(self.landmarks.keys())
 
     def get_current_goal(self):
-        """Return the first landmark in the driving order that hasn't been visited."""
-        for lm_id in self.driving_order:
-            if not self.landmarks[lm_id].is_visited():
-                return self.landmarks[lm_id]
-        return None
+        if self.current_index >= len(self.driving_order):
+            return None
+        lm_id = self.driving_order[self.current_index]
+        return self.landmarks[lm_id]
     
     def get_current_goal_position(self):
         current_goal = self.get_current_goal()
@@ -40,9 +40,8 @@ class LandmarkManager:
         return None
 
     def mark_goal_visited(self):
-        current_goal = self.get_current_goal()
-        if current_goal is not None:
-            current_goal.mark_visited()
+        if self.current_index < len(self.driving_order):
+            self.current_index += 1
 
     def add_landmarks_seen_last_timestep(self, landmarkIDs):
         self.landmarks_seen_last_timestep.update(landmarkIDs)
@@ -55,6 +54,7 @@ class LandmarkManager:
         if current_goal is None:
             return False
         return current_goal.id in self.landmarks_seen_last_timestep
+
 
 
 
