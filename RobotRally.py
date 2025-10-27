@@ -204,7 +204,7 @@ try:
                 p.setWeight(1.0/num_particles)
     
         est_pose = particle.estimate_pose(particles) # The estimate of the robots current pose
-        particles = particle.inject_random_particles(particles, ratio=0.005)
+        #particles = particle.inject_random_particles(particles, ratio=0.005)
 
         # Draw map
         GUI.draw_world(est_pose, particles, world)
