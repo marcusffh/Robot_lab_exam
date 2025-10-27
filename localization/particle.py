@@ -109,7 +109,7 @@ def sample_motion_model(particles_list, distance, angle, sigma_d, sigma_theta):
         add_uncertainty(particles_list, sigma_d, sigma_theta)
 
 
-def measurement_model(particle_list, ObjectIDs, landmark_manager, sigma_d, sigma_theta, dists, angles):
+def measurement_model(particle_list, ObjectIDs, landmark_manager,dists, angles, sigma_d, sigma_theta):
     for particle in particle_list:
         x_i = particle.getX()
         y_i = particle.getY()
