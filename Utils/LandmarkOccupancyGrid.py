@@ -83,6 +83,7 @@ class LandmarkOccupancyGrid:
             if not valid:
                 continue  # skip points outside the map
             if self.robot_collision(grid_point, r_robot, np.arctan2(direction[1], direction[0])):
+                print("no direct path")
                 return False
         return True
 
