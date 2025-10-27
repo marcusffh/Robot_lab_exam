@@ -139,7 +139,7 @@ try:
             print(f"Navigating to goal {landmark_manager.get_current_goal()}")
 
             # Check if direct path is clear
-            if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal_position[0], goal_position[1]], r_robot=20):
+            if grid_map.is_path_clear(grid_map.world_to_grid([est_pose.getX(), est_pose.getY()]), grid_map.world_to_grid([goal_position[0], goal_position[1]]), r_robot=20):
                 distance, angle, object_detected = pathing.move_towards_goal_step(est_pose, goal_position)
                 if object_detected:
                     state = "steer_away_from_object"
