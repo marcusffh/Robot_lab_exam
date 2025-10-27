@@ -78,10 +78,9 @@ try:
     timestep = 0
 
     explore_steps = 16
-    pre_explore_steps = 12
     explore_counter = explore_steps
     object_detected = False
-    state = "pre_explore"
+    state = "explore"
 
     #Initialize the robot
     arlo = CalibratedRobot()
@@ -104,15 +103,15 @@ try:
             break
 
         #Driving logic defined by the state
-        if state == "pre_explore":
+        """if state == "pre_explore":
             print("Pre exploring")
             if pre_explore_steps <= 11:
                 distance, angle, object_detected = pathing.explore_step(False)
             pre_explore_steps -=1
             if pre_explore_steps <= 0:
-                state = "navigate"
+                state = "navigate" """
 
-        elif state == "steer_away_from_object":
+        if state == "steer_away_from_object":
             print("steer_away_from_object")
             distance, angle = pathing.steer_away_from_object()
             object_detected = False
@@ -169,7 +168,7 @@ try:
                         explore_counter = explore_steps
                         state = "explore"
                 else:
-                    print("RRT failed to find path.")
+                    print("Astar failed to find path.")
                     state = "explore"
                 
         particle.sample_motion_model(particles, distance, angle, sigma_d, sigma_theta)
@@ -204,7 +203,7 @@ try:
                 p.setWeight(1.0/num_particles)
     
         est_pose = particle.estimate_pose(particles) # The estimate of the robots current pose
-        particles = particle.inject_random_particles(particles, ratio=0.01)
+        particles = particle.inject_random_particles(particles, ratio=0.005)
 
         # Draw map
         GUI.draw_world(est_pose, particles, world)
