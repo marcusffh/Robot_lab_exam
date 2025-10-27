@@ -71,7 +71,7 @@ try:
     angle = 0.0 # angle turned at this timestep
 
     sigma_d = 15
-    sigma_theta = 0.03
+    sigma_theta = 0.04
     sigma_d_obs = 20
     sigma_theta_obs = 0.05
 
@@ -140,7 +140,13 @@ try:
 
             # Check if direct path is clear
             if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal_position[0], goal_position[1]], r_robot=20):
-                distance, angle, object_detected = pathing.move_towards_goal_step(est_pose, goal_position)
+                angle = pathing.look_towards_goal(est_pose, goal_position)
+                if pathing.sees_landmark(landmark_manager.get_current_goal().id):
+                    distance, object_detected = pathing.drive_towards_goal_step(est_pose, goal_position)
+                else:
+                    particles = particle.initialize_particles(num_particles)
+                    est_pose = particle.estimate_pose(particles)
+                    state = "explore"
                 if object_detected:
                     state = "steer_away_from_object"
                 else:

@@ -153,8 +153,12 @@ def inject_random_particles(particle_list, ratio=0.01):
 def resample_particles(particle_list):
     weights = np.array([p.getWeight() for p in particle_list])
     total_weight = np.sum(weights)
-    weights /= total_weight
-
+    
+    if total_weight == 0:
+        weights = np.ones(len(particle_list)) / len(particle_list)
+    else:
+        weights /= total_weight
+        
     particle_list = [p for p, w in zip(particle_list, weights) if w > 0]
     weights = np.array([w for w in weights if w > 0])
 
