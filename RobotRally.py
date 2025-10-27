@@ -78,9 +78,10 @@ try:
     timestep = 0
 
     explore_steps = 16
+    pre_explore_steps = 12
     explore_counter = explore_steps
     object_detected = False
-    state = "explore"
+    state = "pre_explore"
 
     #Initialize the robot
     arlo = CalibratedRobot()
@@ -103,15 +104,15 @@ try:
             break
 
         #Driving logic defined by the state
-        """if state == "pre_explore":
+        if state == "pre_explore":
             print("Pre exploring")
             if pre_explore_steps <= 11:
                 distance, angle, object_detected = pathing.explore_step(False)
             pre_explore_steps -=1
             if pre_explore_steps <= 0:
-                state = "navigate" """
+                state = "navigate"
 
-        if state == "steer_away_from_object":
+        elif state == "steer_away_from_object":
             print("steer_away_from_object")
             distance, angle = pathing.steer_away_from_object()
             object_detected = False
