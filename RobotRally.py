@@ -81,7 +81,7 @@ try:
     pre_explore_steps = 12
     explore_counter = explore_steps
     object_detected = False
-    state = "pre_explore"
+    state = "explore"
 
     #Initialize the robot
     arlo = CalibratedRobot()
@@ -107,15 +107,7 @@ try:
         print(f"Navigating to goal {landmark_manager.get_current_goal().id}")
 
         #Driving logic defined by the state
-        if state == "pre_explore":
-            print("Pre exploring")
-            if pre_explore_steps <= 11:
-                distance, angle, object_detected = pathing.explore_step(False)
-            pre_explore_steps -=1
-            if pre_explore_steps <= 0:
-                state = "navigate"
-
-        elif state == "steer_away_from_object":
+        if state == "steer_away_from_object":
             print("steer_away_from_object")
             distance, angle = pathing.steer_away_from_object()
             object_detected = False
@@ -124,7 +116,7 @@ try:
 
         elif state == "explore":
             if explore_counter > 0:
-                if landmark_manager.current_goal_seen_last_timestep():
+                if landmark_manager.current_goal_seen_last_timestep() and pathing.seen_enough_landmarks():
                     state = "navigate"
                 else:
                     distance, angle, object_detected = pathing.explore_step(False)
@@ -145,11 +137,11 @@ try:
                     distance, object_detected = pathing.drive_towards_goal_step(est_pose, goal_position)
                     landmark_manager.mark_goal_visited()
                 else:
-                    particles = particle.initialize_particles(num_particles)
-                    est_pose = particle.estimate_pose(particles)
+                    particles = particle.inject_random_particles(particles, ratio=0.3)
                     print("reinitialise")
+                    pathing.observed_landmarks.clear()
                     explore_counter = explore_steps
-                    state = "pre_explore"
+                    state = "explore"
                 if object_detected:
                     state = "steer_away_from_object"
                 else:
@@ -194,6 +186,7 @@ try:
                 print("Object ID = ", objectIDs[i], ", Distance = ", dists[i], ", angle = ", angles[i])
                 if objectIDs[i] in landmark_manager.get_all_ids():
                     landmark_manager.add_landmarks_seen_last_timestep([objectIDs[i]])
+                    pathing.saw_landmark(objectIDs[i])
                 if objectIDs[i] > 4: 
                     if objectIDs[i] in obstacleIds_detcted:
                         grid_map.remove_landmark(objectIDs[i])
@@ -213,7 +206,6 @@ try:
                 p.setWeight(1.0/num_particles)
     
         est_pose = particle.estimate_pose(particles) # The estimate of the robots current pose
-        particles = particle.inject_random_particles(particles, ratio=0.1)
 
         # Draw map
         GUI.draw_world(est_pose, particles, world)
