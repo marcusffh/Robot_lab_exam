@@ -92,7 +92,7 @@ try:
 
     #initialize helper modules    
     cam = camera.Camera(1, robottype='arlo', useCaptureThread=False)
-    pathing = LocalizationPathing(arlo, landmark_manager.get_all_ids())
+    pathing = LocalizationPathing(arlo, cam, landmark_manager.get_all_ids())
     landmark_utils = LandmarkUtils(cam, arlo)
     grid_map = LandmarkOccupancyGrid(low=(-120,-120), high=(520, 420), res=5.0)
     robot = RobotModel()
