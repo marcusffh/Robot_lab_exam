@@ -143,7 +143,7 @@ try:
             goal_idx, valid_goal = grid_map.world_to_grid([goal_position[0], goal_position[1]])
 
             if valid_start and valid_goal:
-                if grid_map.is_path_clear(start_idx, goal_idx, est_pose.getTheta(), r_robot=20):
+                if grid_map.is_path_clear(start_idx, goal_idx, 25, est_pose.getTheta()):
 
                     distance, angle, object_detected = pathing.move_towards_goal_step(est_pose, goal_position)
                     if object_detected:
