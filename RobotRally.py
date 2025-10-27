@@ -156,7 +156,7 @@ try:
                     goal=[goal_position[0], goal_position[1]],
                     initial_heading=est_pose.getTheta()
                 )
-                path = a_Star.planning()
+                path = a_Star.plan()
                 if path is not None:
                     moves, object_detected = arlo.follow_path(path)
 

@@ -33,8 +33,8 @@ class LandmarkOccupancyGrid:
         """
         Convert grid index [i, j] to world coordinates (x, y).
         """
-        x = self.map.map_area[0][0] + (idx[0] + 0.5) * self.map.resolution
-        y = self.map.map_area[0][1] + (idx[1] + 0.5) * self.map.resolution
+        x = self.map_area[0][0] + (idx[0] + 0.5) * self.resolution
+        y = self.map_area[0][1] + (idx[1] + 0.5) * self.resolution
         return [x, y]
 
 
@@ -84,7 +84,7 @@ class LandmarkOccupancyGrid:
                 continue  # skip points outside the map
             if self.robot_collision(grid_point, r_robot, np.arctan2(direction[1], direction[0])):
                 return False
-
+        return True
 
 
     def fill_landmarks(self, landmarks):
