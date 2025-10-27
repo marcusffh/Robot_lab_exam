@@ -151,11 +151,12 @@ def inject_random_particles(particle_list, ratio=0.01):
     return particle_list
 
 def resample_particles(particle_list):
-    particle_list = [p for p in particle_list if p.getWeight() > 0]
-    
     weights = np.array([p.getWeight() for p in particle_list])
     total_weight = np.sum(weights)
     weights /= total_weight
+
+    particle_list = particle_list[weights > 0]
+    weights = weights[weights > 0]
 
     cdf = np.cumsum(weights)
     resampled = []

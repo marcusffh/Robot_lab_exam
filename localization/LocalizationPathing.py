@@ -84,7 +84,7 @@ class LocalizationPathing:
         return distance, angle_to_goal, object_detected
 
 
-    def steer_away_from_object(self, turn_angle=5, distance = 20, stop_threshold=60):
+    def steer_away_from_object(self, turn_angle=5, distance = 20, stop_threshold=100):
         left, center, right = self.robot.proximity_check()
         angle_turned = 0
 
