@@ -79,10 +79,12 @@ class LandmarkOccupancyGrid:
 
         for s in np.arange(0, dist, step):
             point = np.array(start) + direction * s
-            point = self.world_to_grid(point)
-            if self.robot_collision(point, r_robot, direction):
+            grid_point, valid = self.world_to_grid(point)
+            if not valid:
+                continue  # skip points outside the map
+            if self.robot_collision(grid_point, r_robot, np.arctan2(direction[1], direction[0])):
                 return False
-        return True
+
 
 
     def fill_landmarks(self, landmarks):
