@@ -67,7 +67,7 @@ class LandmarkOccupancyGrid:
 
 
     
-    def is_path_clear(self, start, goal, r_robot, step=5):
+    def is_path_clear(self, start, goal, r_robot, heading, step=5):
         """
         Checks if the straight-line path between start and goal is collision-free
         for a robot with radius r_robot.
@@ -79,7 +79,7 @@ class LandmarkOccupancyGrid:
 
         for s in np.arange(0, dist, step):
             point = np.array(start) + direction * s
-            if self.robot_collision(point, r_robot):
+            if self.robot_collision(point, r_robot, heading):
                 return False
         return True
 
