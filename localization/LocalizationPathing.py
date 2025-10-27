@@ -137,7 +137,7 @@ class LocalizationPathing:
 
         return distance, angle_turned
     
-    def sees_landmark(self, landmarkId, fov=np.pi/6):
+    def sees_landmark(self, landmarkId, fov=np.deg2rad(40)):
         """
         Check if a landmark is seen roughly in front of the robot.
         fov: field of view in radians (half-angle to each side)
