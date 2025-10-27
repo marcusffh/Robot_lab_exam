@@ -104,7 +104,6 @@ def sample_motion_model(particles_list, distance, angle, sigma_d, sigma_theta):
     
         move_particle(p, delta_x, delta_y, angle)
     if not(distance == 0 and angle == 0):
-        add_uncertainty(particles_list, sigma_d, sigma_theta)
         sigma_d = sigma_d if distance != 0 else sigma_d * 0.1
         add_uncertainty(particles_list, sigma_d, sigma_theta)
 
