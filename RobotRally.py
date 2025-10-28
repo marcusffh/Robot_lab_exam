@@ -195,6 +195,7 @@ try:
                 already_navigated_to_landmark = False
                 print("landmark visited")
             else:
+                print("hi")
                 particles = particle.inject_random_particles(particles, ratio=0.5)
                 pathing.observed_landmarks.clear()
                 pathing.min_landmarks_met = False
