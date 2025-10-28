@@ -71,11 +71,11 @@ try:
     angle = 0.0 #angle turned at this timestep
 
     sigma_d = 15 #distance noise for motion model
-    sigma_theta = 0.04 #angle noise for motion model
+    sigma_theta = 0.07 #angle noise for motion model
     sigma_d_obs = 15 #distance noise for observational model
-    sigma_theta_obs = 0.3 #angle noise for observational model
+    sigma_theta_obs = 0.1 #angle noise for observational model
 
-    timestep = 0
+    timestep = 0    
 
     object_detected = False # object detected with proximity sensor?
     state = "explore"
@@ -94,6 +94,7 @@ try:
     grid_map = LandmarkOccupancyGrid(low=(-120,-120), high=(520, 420), res=5.0)
     robot = RobotModel()
 
+    firstLandmark = True
     while True:
         timestep += 1
         if landmark_manager.get_current_goal() is None:
@@ -106,7 +107,9 @@ try:
         #Driving logic defined by the state
         if state == "explore":
             print("Exploring")
-            if landmark_manager.current_goal_seen_last_timestep() and pathing.seen_enough_landmarks():
+            if pathing.seen_enough_landmarks():
+                state = "navigate"
+            elif landmark_manager.current_goal_seen_last_timestep() and not firstLandmark:
                 state = "navigate"
             else:
                 distance, angle, object_detected = pathing.explore_step(False)
