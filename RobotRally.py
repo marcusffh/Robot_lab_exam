@@ -101,6 +101,7 @@ try:
     already_navigated_to_landmark = False
 
     firstLandmark = True
+    test = False
     while True:
         timestep += 1
         if landmark_manager.get_current_goal() is None:
@@ -141,6 +142,7 @@ try:
                         distance, object_detected = pathing.drive_towards_goal_step(est_pose, goal_position)
                         print(f"sees goal, driving distance{distance}")
                         already_navigated_to_landmark = True
+
                         state = "check_if_at_landmark"
 
                         if object_detected:
@@ -186,23 +188,26 @@ try:
                 state = "explore"
 
         elif state == "check_if_at_landmark":
-            # Get current estimated position
-            x = est_pose.getX()
-            y = est_pose.getY()
+            if test:
+                # Get current estimated position
+                x = est_pose.getX()
+                y = est_pose.getY()
 
-            # Compute distance to goal landmark
-            dist_to_landmark = np.sqrt((x - goal_position[0])**2 + (y - goal_position[1])**2)
+                # Compute distance to goal landmark
+                dist_to_landmark = np.sqrt((x - goal_position[0])**2 + (y - goal_position[1])**2)
 
-            if dist_to_landmark <= 50:
-                landmark_manager.mark_goal_visited()
-                already_navigated_to_landmark = False
-                print("landmark visited")
-            else:
-                print("hi")
-                particles = particle.inject_random_particles(particles, ratio=0.5)
-                pathing.observed_landmarks.clear()
-                pathing.min_landmarks_met = False
-                state = "explore"            
+                if dist_to_landmark <= 50:
+                    landmark_manager.mark_goal_visited()
+                    already_navigated_to_landmark = False
+                    print("landmark visited")
+                    test = False
+                else:
+                    print("hi")
+                    particles = particle.inject_random_particles(particles, ratio=0.5)
+                    pathing.observed_landmarks.clear()
+                    pathing.min_landmarks_met = False
+                    state = "explore"
+            test = True            
 
                     
         particle.sample_motion_model(particles, distance, angle, sigma_d, sigma_theta)
