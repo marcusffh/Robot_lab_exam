@@ -144,11 +144,6 @@ try:
                         pathing.observed_landmarks.clear()
                         pathing.min_landmarks_met = False
                         state = "explore"
-
-                    if object_detected:
-                        state = "steer_away_from_object"
-                    else:
-                        state = "explore"
                 else:
                     distance, angle = 0, 0
                     print("Path blocked by obstacle, using AStar")
