@@ -107,7 +107,7 @@ try:
         if state == "explore":
             print("Exploring")
             if pathing.seen_enough_landmarks():
-                print("seen enough landmarks or saw goal")
+                print("seen enough landmarks")
                 state = "navigate"
             else:
                 distance, angle, object_detected = pathing.explore_step(False)

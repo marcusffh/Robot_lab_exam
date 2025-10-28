@@ -116,7 +116,7 @@ class LocalizationPathing:
 
         return distance, object_detected
 
-    def steer_away_from_object(self, turn_angle=5, distance = 20, stop_threshold=250):
+    def steer_away_from_object(self, turn_angle=5, stop_threshold=210):
         left, center, right = self.robot.proximity_check()
         angle_turned = 0
 
@@ -132,9 +132,7 @@ class LocalizationPathing:
             left, center, right = self.robot.proximity_check()
             time.sleep(0.2)
 
-        self.robot.drive_distance_cm(distance)
-
-        return distance, angle_turned
+        return 0, angle_turned
     
     def sees_landmark(self, landmarkId, fov=np.deg2rad(40)):
         """

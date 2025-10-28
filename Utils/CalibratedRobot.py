@@ -32,7 +32,7 @@ class CalibratedRobot:
         r = self.clamp_power(rightSpeed * self.CAL_KR) if rightSpeed > 0 else 0
         self.arlo.go_diff(l, r, leftDir, rightDir)
 
-    def drive_distance(self, meters, direction=None, speed=None, stop_threshold=270):
+    def drive_distance(self, meters, direction=None, speed=None, stop_threshold=300):
         """Drive a certain distance in meters with proximity safety."""
         if speed is None:
             speed = self.default_speed
