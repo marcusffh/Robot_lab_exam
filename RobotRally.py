@@ -127,7 +127,10 @@ try:
             object_detected = False
             pathing.observed_landmarks.clear()
             pathing.min_landmarks_met = False
-            state = "explore"
+            if already_navigated_to_landmark == True:
+                state = "check_if_at_landmark"
+            else:
+                state = "explore"
 
         elif state == "navigate":
             print(f"navigating to goal{landmark_manager.get_current_goal().id}")
