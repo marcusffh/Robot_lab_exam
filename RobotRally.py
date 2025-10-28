@@ -70,9 +70,9 @@ try:
     distance = 0.0 # distance driven at this time step
     angle = 0.0 #angle turned at this timestep
 
-    sigma_d = 10 #distance noise for motion model
+    sigma_d = 5 #distance noise for motion model
     sigma_theta = 0.07 #angle noise for motion model
-    sigma_d_obs = 15 #distance noise for observational model
+    sigma_d_obs = 10 #distance noise for observational model
     sigma_theta_obs = 0.1 #angle noise for observational model
 
     timestep = 0    
