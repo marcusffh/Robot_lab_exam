@@ -110,7 +110,6 @@ try:
                 state = "navigate"
             else:
                 distance, angle, object_detected = pathing.explore_step(False)
-                print(f"exploring, turning {np.degrees(angle)} degress")
 
             if object_detected:
                 state = "steer_away_from_object"
@@ -122,16 +121,18 @@ try:
             state = "explore"
 
         elif state == "navigate":
+            print(f"navigating to goal{landmark_manager.get_current_goal().id}")
             # Check if direct path is clear
             if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal_position[0], goal_position[1]], r_robot=20):
                 print(f"est_pose: {est_pose.getX(), est_pose.getY(), est_pose.getTheta()}")
                 angle = pathing.look_towards_goal(est_pose, goal_position)
                 if pathing.sees_landmark(landmark_manager.get_current_goal().id):
                     distance, object_detected = pathing.drive_towards_goal_step(est_pose, goal_position)
+                    print(f"sees goal, driving distance{distance}")
                     landmark_manager.mark_goal_visited()
                 else:
-                    particles = particle.inject_random_particles(particles, ratio=0.3)
-                    print("reinitialise")
+                    particles = particle.inject_random_particles(particles, ratio=0.5)
+                    print("We are lost, need to figure out where we are")
                     pathing.observed_landmarks.clear()
                     pathing.min_landmarks_met = False
                     state = "explore"
