@@ -81,7 +81,7 @@ class LandmarkOccupancyGrid:
             point = np.array(start) + direction * s
             grid_point, valid = self.world_to_grid(point)
             if not valid:
-                continue  # skip points outside the map
+                break
             if self.robot_collision(grid_point, r_robot, np.arctan2(direction[1], direction[0])):
                 print("no direct path")
                 return False

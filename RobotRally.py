@@ -126,50 +126,59 @@ try:
         elif state == "navigate":
             print(f"navigating to goal{landmark_manager.get_current_goal().id}")
             # Check if direct path is clear
-            if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal_position[0], goal_position[1]], r_robot=20):
-                print(f"path clear. est_pose: {est_pose.getX(), est_pose.getY(), est_pose.getTheta()}")
-                angle = pathing.look_towards_goal(est_pose, goal_position)
-                if pathing.sees_landmark(landmark_manager.get_current_goal().id):
-                    distance, object_detected = pathing.drive_towards_goal_step(est_pose, goal_position)
-                    print(f"sees goal, driving distance{distance}")
-                    landmark_manager.mark_goal_visited()
-                else:
-                    particles = particle.inject_random_particles(particles, ratio=0.5)
-                    print("We are lost, need to figure out where we are")
-                    pathing.observed_landmarks.clear()
-                    pathing.min_landmarks_met = False
-                    state = "explore"
-
-                if object_detected:
-                    state = "steer_away_from_object"
-                else:
-                    state = "explore"
-            else:
-                distance, angle = 0, 0
-                print("Path blocked by obstacle, using AStar")
-                a_Star = AStar(
-                    map=grid_map, 
-                    r_model=robot,
-                    start=[est_pose.getX(), est_pose.getY()],
-                    goal=[goal_position[0], goal_position[1]],
-                    initial_heading=est_pose.getTheta()
-                )
-                path = a_Star.plan()
-                if path is not None:
-                    moves, object_detected = arlo.follow_path(path)
-
-                    for dist, ang in moves:
-                        particle.sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
+            start_idx, valid = grid_map.world_to_grid([est_pose.getX(), est_pose.getY()])
+            if valid:
+                if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal_position[0], goal_position[1]], r_robot=20):
+                    print(f"path clear. est_pose: {est_pose.getX(), est_pose.getY(), est_pose.getTheta()}")
+                    angle = pathing.look_towards_goal(est_pose, goal_position)
+                    if pathing.sees_landmark(landmark_manager.get_current_goal().id):
+                        distance, object_detected = pathing.drive_towards_goal_step(est_pose, goal_position)
+                        print(f"sees goal, driving distance{distance}")
+                        landmark_manager.mark_goal_visited()
+                    else:
+                        particles = particle.inject_random_particles(particles, ratio=0.5)
+                        print("We are lost, need to figure out where we are")
+                        pathing.observed_landmarks.clear()
+                        pathing.min_landmarks_met = False
+                        state = "explore"
 
                     if object_detected:
                         state = "steer_away_from_object"
                     else:
                         state = "explore"
                 else:
-                    print("Astar failed to find path.")
-                    dist, angle, obstacleIds_detcted = pathing.explore_step(True)
-                    state = "explore"
-                
+                    distance, angle = 0, 0
+                    print("Path blocked by obstacle, using AStar")
+                    a_Star = AStar(
+                        map=grid_map, 
+                        r_model=robot,
+                        start=[est_pose.getX(), est_pose.getY()],
+                        goal=[goal_position[0], goal_position[1]],
+                        initial_heading=est_pose.getTheta()
+                    )
+                    path = a_Star.plan()
+                    if path is not None:
+                        moves, object_detected = arlo.follow_path(path)
+
+                        for dist, ang in moves:
+                            particle.sample_motion_model(particles, dist, ang, sigma_d, sigma_theta)
+
+                        if object_detected:
+                            state = "steer_away_from_object"
+                        else:
+                            state = "explore"
+                    else:
+                        print("Astar failed to find path.")
+                        dist, angle, obstacleIds_detcted = pathing.explore_step(True)
+                        state = "explore"
+            else:
+                particles = particle.inject_random_particles(particles, ratio=0.5)
+                print("We are lost, need to figure out where we are")
+                pathing.observed_landmarks.clear()
+                pathing.min_landmarks_met = False
+                state = "explore"
+
+                    
         particle.sample_motion_model(particles, distance, angle, sigma_d, sigma_theta)
         # Fetch next frame
         colour = cam.get_next_frame()
