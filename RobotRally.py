@@ -189,7 +189,7 @@ try:
             # Compute distance to goal landmark
             dist_to_landmark = np.sqrt((x - goal_position[0])**2 + (y - goal_position[1])**2)
 
-            if dist_to_landmark <= 40:
+            if dist_to_landmark <= 50:
                 landmark_manager.mark_goal_visited()
                 print("landmark visited")
                 state = "explore"
