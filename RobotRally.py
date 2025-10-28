@@ -107,6 +107,7 @@ try:
         if state == "explore":
             print("Exploring")
             if pathing.seen_enough_landmarks() or (landmark_manager.current_goal_seen_last_timestep() and not firstLandmark):
+                print("seen enough landmarks or saw goal")
                 state = "navigate"
             else:
                 distance, angle, object_detected = pathing.explore_step(False)
@@ -115,8 +116,8 @@ try:
                 state = "steer_away_from_object"
 
         elif state == "steer_away_from_object":
-            print("steering away from object")
             distance, angle = pathing.steer_away_from_object()
+            print(f"steering away from object, moved distance {distance}, angle {angle}")
             object_detected = False
             state = "explore"
 
@@ -124,7 +125,7 @@ try:
             print(f"navigating to goal{landmark_manager.get_current_goal().id}")
             # Check if direct path is clear
             if grid_map.is_path_clear([est_pose.getX(), est_pose.getY()], [goal_position[0], goal_position[1]], r_robot=20):
-                print(f"est_pose: {est_pose.getX(), est_pose.getY(), est_pose.getTheta()}")
+                print(f"path clear. est_pose: {est_pose.getX(), est_pose.getY(), est_pose.getTheta()}")
                 angle = pathing.look_towards_goal(est_pose, goal_position)
                 if pathing.sees_landmark(landmark_manager.get_current_goal().id):
                     distance, object_detected = pathing.drive_towards_goal_step(est_pose, goal_position)

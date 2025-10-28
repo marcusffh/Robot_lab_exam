@@ -32,7 +32,7 @@ class CalibratedRobot:
         r = self.clamp_power(rightSpeed * self.CAL_KR) if rightSpeed > 0 else 0
         self.arlo.go_diff(l, r, leftDir, rightDir)
 
-    def drive_distance(self, meters, direction=None, speed=None, stop_threshold=250):
+    def drive_distance(self, meters, direction=None, speed=None, stop_threshold=270):
         """Drive a certain distance in meters with proximity safety."""
         if speed is None:
             speed = self.default_speed
@@ -55,13 +55,14 @@ class CalibratedRobot:
             if time.time() - start_time >= duration:
                 break
 
-            time.sleep(0.05)
 
         self.arlo.stop()
 
         # compute how far we actually drove
         elapsed = time.time() - start_time
         actual_meters = (elapsed / duration) * meters
+
+        time.sleep(0.2)
 
         return actual_meters, obstacle_detected
 

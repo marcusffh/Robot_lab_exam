@@ -109,8 +109,6 @@ class LocalizationPathing:
         object_detected = False
         
         move_dist = distance_to_goal - 12.5
-        
-        print(f"distance moved: {distance_to_goal}")
 
         distance, object_detected = self.robot.drive_distance_cm(move_dist)
         self.robot.stop()
