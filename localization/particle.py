@@ -104,39 +104,44 @@ def sample_motion_model(particles_list, distance, angle, sigma_d, sigma_theta):
     
         move_particle(p, delta_x, delta_y, angle)
     if not(distance == 0 and angle == 0):
-        sigma_d = sigma_d if distance != 0 else sigma_d * 0.5
+        sigma_d = sigma_d if distance != 0 else sigma_d * 0.3
         add_uncertainty(particles_list, sigma_d, sigma_theta)
 
 
-def measurement_model(particle_list, ObjectIDs, landmark_manager,dists, angles, sigma_d, sigma_theta):
+def measurement_model(particle_list, ObjectIDs, landmark_manager, dists, angles, sigma_d, sigma_theta):
     for particle in particle_list:
         x_i = particle.getX()
         y_i = particle.getY()
         theta_i = particle.getTheta()
 
-        p_observation_given_x = 1.0
+        weight_sum = 0.0
+        count = 0
 
         for landmarkID, dist, angle in zip(ObjectIDs, dists, angles):
             lm = landmark_manager.landmarks.get(landmarkID)
             if lm is not None:
                 l_x, l_y = lm.x, lm.y
                 d_i = np.sqrt((l_x - x_i)**2 + (l_y - y_i)**2)
-                
                 p_d_m = norm.pdf(dist, loc=d_i, scale=sigma_d)
 
                 e_theta = np.array([np.cos(theta_i), np.sin(theta_i)])
                 e_theta_hat = np.array([-np.sin(theta_i), np.cos(theta_i)])
-
                 e_l = np.array([l_x - x_i, l_y - y_i]) / d_i
 
                 dot = np.dot(e_l, e_theta)
                 phi_i = np.sign(np.dot(e_l, e_theta_hat)) * np.arccos(dot)
-                
-                p_phi_m = norm.pdf(angle, loc=phi_i, scale=sigma_theta)
 
-                p_observation_given_x *= (p_d_m * p_phi_m)
+                p_phi_m = norm.pdf(phi_i, loc=0.0, scale=sigma_theta)
 
-        particle.setWeight(p_observation_given_x)
+                weight_sum += (p_d_m * p_phi_m)
+                count += 1
+
+        # average over all visible landmarks to avoid bias toward more observations
+        if count > 0:
+            particle.setWeight(weight_sum / count)
+        else:
+            particle.setWeight(1e-9)  # small fallback weight
+
 
 
 def inject_random_particles(particle_list, ratio=0.01):

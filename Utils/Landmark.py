@@ -7,15 +7,6 @@ class Landmark:
         self.x = x
         self.y = y
         self.radius = radius
-        self.visited = False
-
-    def mark_visited(self):
-        """Mark this landmark as visited."""
-        self.visited = True
-
-    def is_visited(self):
-        """Check if the landmark has been visited."""
-        return self.visited
 
 class LandmarkManager:
     def __init__(self, landmarks, driving_order):

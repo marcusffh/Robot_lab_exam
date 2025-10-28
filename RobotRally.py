@@ -20,10 +20,10 @@ from Utils.Robot import Robot
 from Utils.Landmark import Landmark, LandmarkManager
 
 landmarks = [
-    Landmark(1, 0, 0, 20),
-    Landmark(2, 0, 200, 20),
-    Landmark(3, 200, 0, 20),
-    Landmark(4, 200, 200, 20),
+    Landmark(1, 0.0, 0.0, 20.0),
+    Landmark(2, 0.0, 180.0, 20.0),
+    Landmark(3, 180.0, 0.0, 20.0),
+    Landmark(4, 180.0, 180.0, 20.0),
 ]
 
 driving_order = [1,2,3,4,1]
@@ -64,22 +64,20 @@ try:
     particles = particle.initialize_particles(num_particles)
 
     est_pose = particle.estimate_pose(particles) # The estimate of the robots current pose
-    print(f"estimated pose: {est_pose}")
+    print(f"estimated pose: {est_pose.getX(), est_pose.getY(), est_pose.getTheta()}")
 
     # Driving parameters
     distance = 0.0 # distance driven at this time step
-    angle = 0.0 # angle turned at this timestep
+    angle = 0.0 #angle turned at this timestep
 
-    sigma_d = 15
-    sigma_theta = 0.04
-    sigma_d_obs = 20
-    sigma_theta_obs = 0.05
+    sigma_d = 15 #distance noise for motion model
+    sigma_theta = 0.04 #angle noise for motion model
+    sigma_d_obs = 20 #distance noise for observational model
+    sigma_theta_obs = 0.3 #angle noise for observational model
 
     timestep = 0
 
-    explore_steps = 16
-    explore_counter = explore_steps
-    object_detected = False
+    object_detected = False # object detected with proximity sensor?
     state = "explore"
 
     #Initialize the robot
@@ -103,7 +101,7 @@ try:
             break
 
         goal_position = landmark_manager.get_current_goal_position()
-        print(f"Navigating to goal {landmark_manager.get_current_goal().id}")
+        print(f"Next goal {landmark_manager.get_current_goal().id}")
 
         #Driving logic defined by the state
         if state == "explore":
@@ -112,7 +110,7 @@ try:
                 state = "navigate"
             else:
                 distance, angle, object_detected = pathing.explore_step(False)
-                print(f"Exploring after landmark, steps left: {explore_counter}")
+                print(f"Exploring after landmark")
 
             if object_detected:
                 state = "steer_away_from_object"
@@ -137,6 +135,7 @@ try:
                     pathing.observed_landmarks.clear()
                     pathing.min_landmarks_met = False
                     state = "explore"
+
                 if object_detected:
                     state = "steer_away_from_object"
                 else:
@@ -161,10 +160,10 @@ try:
                     if object_detected:
                         state = "steer_away_from_object"
                     else:
-                        explore_counter = explore_steps
                         state = "explore"
                 else:
                     print("Astar failed to find path.")
+                    dist, angle, obstacleIds_detcted = pathing.explore_step(True)
                     state = "explore"
                 
         particle.sample_motion_model(particles, distance, angle, sigma_d, sigma_theta)
