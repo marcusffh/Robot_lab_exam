@@ -106,7 +106,7 @@ try:
         #Driving logic defined by the state
         if state == "explore":
             print("Exploring")
-            if pathing.seen_enough_landmarks() or (landmark_manager.current_goal_seen_last_timestep() and not firstLandmark):
+            if pathing.seen_enough_landmarks():
                 print("seen enough landmarks or saw goal")
                 state = "navigate"
             else:
@@ -119,6 +119,8 @@ try:
             distance, angle = pathing.steer_away_from_object()
             print(f"steering away from object, moved distance {distance}, angle {angle}")
             object_detected = False
+            pathing.observed_landmarks.clear()
+            pathing.min_landmarks_met = False
             state = "explore"
 
         elif state == "navigate":
