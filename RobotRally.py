@@ -72,7 +72,7 @@ try:
 
     sigma_d = 15 #distance noise for motion model
     sigma_theta = 0.04 #angle noise for motion model
-    sigma_d_obs = 20 #distance noise for observational model
+    sigma_d_obs = 15 #distance noise for observational model
     sigma_theta_obs = 0.3 #angle noise for observational model
 
     timestep = 0
