@@ -70,7 +70,7 @@ try:
     distance = 0.0 # distance driven at this time step
     angle = 0.0 #angle turned at this timestep
 
-    sigma_d = 15 #distance noise for motion model
+    sigma_d = 10 #distance noise for motion model
     sigma_theta = 0.07 #angle noise for motion model
     sigma_d_obs = 15 #distance noise for observational model
     sigma_theta_obs = 0.1 #angle noise for observational model
@@ -102,24 +102,21 @@ try:
             break
 
         goal_position = landmark_manager.get_current_goal_position()
-        print(f"Next goal {landmark_manager.get_current_goal().id}")
 
         #Driving logic defined by the state
         if state == "explore":
             print("Exploring")
-            if pathing.seen_enough_landmarks():
-                state = "navigate"
-            elif landmark_manager.current_goal_seen_last_timestep() and not firstLandmark:
+            if pathing.seen_enough_landmarks() or (landmark_manager.current_goal_seen_last_timestep() and not firstLandmark):
                 state = "navigate"
             else:
                 distance, angle, object_detected = pathing.explore_step(False)
-                print(f"Exploring after landmark")
+                print(f"exploring, turning {np.degrees(angle)} degress")
 
             if object_detected:
                 state = "steer_away_from_object"
 
         elif state == "steer_away_from_object":
-            print("steer_away_from_object")
+            print("steering away from object")
             distance, angle = pathing.steer_away_from_object()
             object_detected = False
             state = "explore"

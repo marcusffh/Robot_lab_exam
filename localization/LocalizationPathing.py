@@ -53,7 +53,6 @@ class LocalizationPathing:
             self.observed_landmarks.add(landmarkID)
 
             if len(self.observed_landmarks) >= self.min_landmarks_to_see:
-                print("seen enough")
                 self.min_landmarks_met = True
 
     def seen_enough_landmarks(self):
@@ -119,7 +118,7 @@ class LocalizationPathing:
 
         return distance, object_detected
 
-    def steer_away_from_object(self, turn_angle=5, distance = 20, stop_threshold=220):
+    def steer_away_from_object(self, turn_angle=5, distance = 20, stop_threshold=250):
         left, center, right = self.robot.proximity_check()
         angle_turned = 0
 
@@ -133,6 +132,7 @@ class LocalizationPathing:
                 angle_turned -= np.radians(turn_angle)
 
             left, center, right = self.robot.proximity_check()
+            time.sleep(0.2)
 
         self.robot.drive_distance_cm(distance)
 
