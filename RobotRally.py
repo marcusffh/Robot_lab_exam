@@ -106,7 +106,7 @@ try:
         #Driving logic defined by the state
         if state == "explore":
             print("Exploring")
-            if landmark_manager.current_goal_seen_last_timestep() or pathing.seen_enough_landmarks():
+            if landmark_manager.current_goal_seen_last_timestep() and pathing.seen_enough_landmarks():
                 state = "navigate"
             else:
                 distance, angle, object_detected = pathing.explore_step(False)
