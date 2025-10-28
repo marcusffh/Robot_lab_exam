@@ -57,6 +57,7 @@ def add_obstacle_to_grid(grid_map, obstacle_id, est_pose, dist, angle, landmark_
     grid_map.add_landmark(obstacle_id, x_obj, y_obj, landmark_radius)
     grid_map.save_map(filename=f"grid{timestep}.png")
 
+
 # Main program #
 try:
     # Initialize particles
@@ -96,6 +97,8 @@ try:
 
     check_for_landmark_steps = 16
     check_for_landmark_counter = check_for_landmark_steps
+
+    already_navigated_to_landmark = False
 
     firstLandmark = True
     while True:
@@ -137,6 +140,9 @@ try:
                     if pathing.sees_landmark(landmark_manager.get_current_goal().id):
                         distance, object_detected = pathing.drive_towards_goal_step(est_pose, goal_position)
                         print(f"sees goal, driving distance{distance}")
+                        already_navigated_to_landmark = True
+                        state = "check_if_at_landmark"
+                    elif already_navigated_to_landmark:
                         state = "check_if_at_landmark"
                     else:
                         particles = particle.inject_random_particles(particles, ratio=0.5)
@@ -186,14 +192,13 @@ try:
 
             if dist_to_landmark <= 50:
                 landmark_manager.mark_goal_visited()
+                already_navigated_to_landmark = False
                 print("landmark visited")
-                state = "explore"
             else:
                 particles = particle.inject_random_particles(particles, ratio=0.5)
-                print("We are lost, need to figure out where we are")
                 pathing.observed_landmarks.clear()
                 pathing.min_landmarks_met = False
-                state = "explore"
+                state = "explore"            
 
                     
         particle.sample_motion_model(particles, distance, angle, sigma_d, sigma_theta)
