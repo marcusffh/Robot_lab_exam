@@ -191,6 +191,7 @@ try:
 
             if dist_to_landmark <= 40:
                 landmark_manager.mark_goal_visited()
+                state = "explore"
             else:
                 particles = particle.inject_random_particles(particles, ratio=0.5)
                 print("We are lost, need to figure out where we are")
