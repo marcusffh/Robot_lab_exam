@@ -70,7 +70,7 @@ try:
     distance = 0.0 # distance driven at this time step
     angle = 0.0 #angle turned at this timestep
 
-    sigma_d = 5 #distance noise for motion model
+    sigma_d = 10 #distance noise for motion model
     sigma_theta = 0.07 #angle noise for motion model
     sigma_d_obs = 20 #distance noise for observational model
     sigma_theta_obs = 0.1 #angle noise for observational model
@@ -93,6 +93,9 @@ try:
     landmark_utils = LandmarkUtils(cam, arlo)
     grid_map = LandmarkOccupancyGrid(low=(-120,-120), high=(520, 420), res=5.0)
     robot = RobotModel()
+
+    check_for_landmark_steps = 16
+    check_for_landmark_counter = check_for_landmark_steps
 
     firstLandmark = True
     while True:
@@ -134,7 +137,7 @@ try:
                     if pathing.sees_landmark(landmark_manager.get_current_goal().id):
                         distance, object_detected = pathing.drive_towards_goal_step(est_pose, goal_position)
                         print(f"sees goal, driving distance{distance}")
-                        landmark_manager.mark_goal_visited()
+                        state = "check_if_at_landmark"
                     else:
                         particles = particle.inject_random_particles(particles, ratio=0.5)
                         print("We are lost, need to figure out where we are")
@@ -171,6 +174,23 @@ try:
                         print("Astar failed to find path.")
                         dist, angle, obstacleIds_detcted = pathing.explore_step(True)
                         state = "explore"
+            else:
+                particles = particle.inject_random_particles(particles, ratio=0.5)
+                print("We are lost, need to figure out where we are")
+                pathing.observed_landmarks.clear()
+                pathing.min_landmarks_met = False
+                state = "explore"
+
+        elif state == "check_if_at_landmark":
+            # Get current estimated position
+            x = est_pose.getX()
+            y = est_pose.getY()
+
+            # Compute distance to goal landmark
+            dist_to_landmark = np.sqrt((x - goal_position[0])**2 + (y - goal_position[1])**2)
+
+            if dist_to_landmark <= 40:
+                landmark_manager.mark_goal_visited()
             else:
                 particles = particle.inject_random_particles(particles, ratio=0.5)
                 print("We are lost, need to figure out where we are")
